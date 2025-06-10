@@ -1,0 +1,44 @@
+{
+  "name": "kanpai-backend",
+  "version": "0.1.0",
+  "description": "kanpAI - Backend Server",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "db:init": "node src/db/init-db.js",
+    "db:create-menus": "node src/db/create-menus.js",
+    "db:create-chat-tables": "node src/db/create-chat-tables.js",
+    "db:create-reservation-tables": "node src/db/create-reservation-tables.js",
+    "db:create-billing-tables": "node src/db/create-billing-tables.js",
+    "db:seed-plans": "node src/db/seed-plans.js",
+    "db:create-line-broadcasts": "node src/db/create-line-broadcast-table.js",
+    "db:create-usage-logs": "node src/db/create-usage-logs-table.js",
+    "db:fix-usage-logs": "node src/db/fix-usage-logs-table.js",
+    "db:fix-subscriptions": "node src/db/fix-subscriptions-table.js",
+    "db:create-report": "node src/db/create-report-table.js",
+    "db:update-chat-messages": "node src/db/update-chat-messages-table.js",
+    "db:update-line": "node src/db/update-line-tables.js",
+    "db:check-reservations": "node src/db/check-reservations-debug.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "line",
+    "chatbot",
+    "openai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@line/bot-sdk": "^8.4.1",
+    "axios": "^1.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^142.0.0",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.47.3",
+    "pg": "^8.12.0",
+    "stripe": "^15.8.0"
+  }
+}

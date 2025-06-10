@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約ページ - 居酒屋かんぱい</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .back-button {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-5px);
+        }
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .info-card h1 {
+            color: #333;
+            margin-bottom: 16px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .instruction {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .test-link:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="http://localhost:3000" class="back-button">
+            ← ダッシュボードに戻る
+        </a>
+        
+        <div class="info-card">
+            <h1>📅 居酒屋かんぱい 予約ページ</h1>
+            
+            <div class="status-badge">
+                🕐 営業時間外のため、Webフォームでのご予約となります
+            </div>
+            
+            <div class="instruction">
+                営業時間: 17:00〜24:00<br>
+                営業時間外は24時間いつでもご予約いただけます
+            </div>
+            
+            <a href="http://localhost:3000?page=reservation" class="test-link">
+                📝 予約フォームを開く
+            </a>
+        </div>
+        
+        <div class="info-card">
+            <h2>🔧 開発者向け情報</h2>
+            <div style="text-align: left; font-size: 14px; color: #666;">
+                <p><strong>実装された機能:</strong></p>
+                <ul>
+                    <li>✅ 営業時間の自動判定</li>
+                    <li>✅ 当日予約の拒否</li>
+                    <li>✅ 席種・人数制限チェック</li>
+                    <li>✅ Googleカレンダー連携（準備済み）</li>
+                    <li>✅ 3段階フォーム（入力→確認→完了）</li>
+                    <li>✅ レスポンシブデザイン</li>
+                </ul>
+                
+                <p><strong>API エンドポイント:</strong></p>
+                <ul>
+                    <li>GET /api/reservations/business-status</li>
+                    <li>GET /api/reservations/available-seats</li>
+                    <li>POST /api/reservations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
