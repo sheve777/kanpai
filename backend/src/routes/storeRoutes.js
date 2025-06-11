@@ -5,6 +5,32 @@ import pool from '../config/db.js';
 const router = express.Router();
 
 // --- 店舗関連API ---
+
+// 店舗情報取得API（営業時間外予約ページ用）
+router.get('/:storeId/info', async (req, res) => {
+  const { storeId } = req.params;
+  try {
+    const client = await pool.connect();
+    try {
+      const query = 'SELECT id, name, phone, address, concept, operating_hours FROM stores WHERE id = $1;';
+      const result = await client.query(query, [storeId]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: '店舗が見つかりません。' });
+      }
+      
+      const store = result.rows[0];
+      console.log(`✅ 店舗情報を取得しました: ${store.name}`);
+      res.status(200).json(store);
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('❌ 店舗情報取得中にエラーが発生しました:', err.stack);
+    res.status(500).json({ error: 'サーバー内部でエラーが発生しました。' });
+  }
+});
+
 router.post('/', async (req, res) => {
   const { name, phone, address, concept } = req.body;
   if (!name) return res.status(400).json({ error: '店舗名は必須です。' });

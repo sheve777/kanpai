@@ -12,6 +12,7 @@ import AdditionalServices from './components/AdditionalServices';
 import BasicInfo from './components/BasicInfo';
 import ReportDetailPage from './components/ReportDetailPage';
 import ReservationForm from './components/ReservationForm';
+import StandaloneReservationPage from './components/StandaloneReservationPage';
 import './App.css';
 
 function App() {
@@ -40,12 +41,14 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('page') === 'reservation') {
       setCurrentPage('reservation');
+    } else if (urlParams.get('page') === 'standalone-reservation') {
+      setCurrentPage('standalone-reservation');
     }
   }, []);
 
   return (
     <div className="App-container">
-      {currentPage !== 'reservation' && <Header />}
+      {currentPage !== 'reservation' && currentPage !== 'standalone-reservation' && <Header />}
       
       {currentPage === 'dashboard' ? (
         <main>
@@ -61,6 +64,8 @@ function App() {
         </main>
       ) : currentPage === 'reportDetail' ? (
         <ReportDetailPage reportId={selectedReportId} onBack={handleBackToDashboard} />
+      ) : currentPage === 'standalone-reservation' ? (
+        <StandaloneReservationPage storeId={storeId} />
       ) : currentPage === 'reservation' ? (
         <div style={{
           minHeight: '100vh',
