@@ -67,7 +67,7 @@ const AdditionalServices = ({ storeId }) => {
         return (
             <div className="card additional-services-container">
                 <div className="card-header">
-                    <div className="summary-icon">⚡</div>
+                    <div className="summary-icon">➕</div>
                     <h2>追加サービス (従量課金)</h2>
                 </div>
                 <p style={{color: 'red'}}>店舗IDが設定されていません。管理者にお問い合わせください。</p>

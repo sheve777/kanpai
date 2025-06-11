@@ -14,7 +14,7 @@ const BasicInfo = () => {
     return (
         <div className="card basic-info-container">
             <div className="card-header">
-                <div className="summary-icon">⚙️</div>
+                <div className="summary-icon">🏪</div>
                 <h2>店舗基本情報</h2>
             </div>
             <div className="info-list">

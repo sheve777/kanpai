@@ -189,7 +189,7 @@ const UsageStatus = ({ storeId }) => {
         return (
             <div className="card usage-status-container">
                 <div className="card-header">
-                    <div className="summary-icon">📊</div>
+                    <div className="summary-icon">⚡</div>
                     <h2>使用状況を読み込み中...</h2>
                 </div>
             </div>
@@ -201,7 +201,7 @@ const UsageStatus = ({ storeId }) => {
     return (
         <div className="card usage-status-container">
             <div className="card-header">
-                <div className="summary-icon">📊</div>
+                <div className="summary-icon">⚡</div>
                 <h2>現在のプラン: {status.plan_name}</h2>
             </div>
             

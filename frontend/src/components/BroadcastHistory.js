@@ -18,7 +18,7 @@ const BroadcastHistory = ({ storeId }) => {
     return (
         <div className="card broadcast-history-container">
             <div className="card-header">
-                <div className="summary-icon">📜</div>
+                <div className="summary-icon">📝</div>
                 <h2>最近の配信履歴</h2>
             </div>
             <ul className="history-list">

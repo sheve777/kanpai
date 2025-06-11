@@ -202,7 +202,7 @@ const LineBroadcast = ({ storeId }) => {
         <div className="card line-broadcast-container">
             {/* Header */}
             <div className="card-header">
-                <div className="summary-icon">💬</div>
+                <div className="summary-icon">📢</div>
                 <div style={{ flex: 1 }}>
                     <h2 style={{ margin: 0 }}>LINE一斉配信</h2>
                     {lineUsageStatus && (

@@ -302,7 +302,7 @@ const MenuList = ({ storeId }) => {
     return (
         <div className="card menu-list-container">
             <div className="card-header">
-                <div className="summary-icon">📖</div>
+                <div className="summary-icon">🍽️</div>
                 <h2>メニュー管理</h2>
                 <button 
                     onClick={() => setShowAddForm(!showAddForm)}

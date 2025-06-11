@@ -117,10 +117,11 @@ main {
     position: absolute;
     bottom: -1px;
     left: 0;
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
-    border-radius: 2px;
+    width: 40px;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: 1px;
+    opacity: 0.6;
 }
 
 .card-header h2 {
@@ -133,17 +134,31 @@ main {
 }
 
 .card-header .summary-icon {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     width: 44px;
     height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+    background: rgba(185, 58, 58, 0.08);
     border-radius: 10px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(185, 58, 58, 0.25);
+    box-shadow: 
+        inset 1px 1px 2px rgba(253, 250, 244, 0.9),
+        inset -1px -1px 2px rgba(74, 47, 34, 0.08),
+        0 2px 6px rgba(74, 47, 34, 0.06);
+    border: 1px solid rgba(185, 58, 58, 0.12);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.card:hover .summary-icon {
+    background: rgba(185, 58, 58, 0.12);
+    transform: translateY(-1px);
+    box-shadow: 
+        inset 1px 1px 2px rgba(253, 250, 244, 1),
+        inset -1px -1px 2px rgba(74, 47, 34, 0.12),
+        0 4px 12px rgba(74, 47, 34, 0.1);
 }
 
 /* ★★★ 追加サービスのスタイル ★★★ */
@@ -181,18 +196,23 @@ main {
 }
 
 .secondary-button {
-    background: linear-gradient(135deg, var(--color-accent), #d4442a);
-    color: white;
-    border: none;
-    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--color-accent), #a02f2f);
+    color: var(--color-background);
+    border: 2px solid rgba(74, 47, 34, 0.2);
+    padding: 12px 24px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
+    font-family: var(--font-body);
+    letter-spacing: 0.3px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(185, 58, 58, 0.25);
+    box-shadow: 
+        inset 1px 1px 2px rgba(253, 250, 244, 0.2),
+        inset -1px -1px 2px rgba(74, 47, 34, 0.2),
+        0 3px 8px rgba(74, 47, 34, 0.15);
     position: relative;
-    overflow: hidden;
+    text-shadow: 0.5px 0.5px 1px rgba(74, 47, 34, 0.3);
 }
 
 .secondary-button::before {
@@ -207,8 +227,13 @@ main {
 }
 
 .secondary-button:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(185, 58, 58, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 
+        inset 1px 1px 3px rgba(253, 250, 244, 0.3),
+        inset -1px -1px 3px rgba(74, 47, 34, 0.3),
+        0 6px 16px rgba(74, 47, 34, 0.25);
+    background: linear-gradient(135deg, #d4442a, var(--color-accent));
+    border-color: rgba(74, 47, 34, 0.3);
 }
 
 .secondary-button:hover:not(:disabled)::before {
@@ -1129,9 +1154,12 @@ main {
 .action-button:hover {
     border-color: var(--color-accent);
     background: var(--color-accent);
-    color: white;
+    color: var(--color-background);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(185, 58, 58, 0.25);
+    box-shadow: 
+        inset 1px 1px 2px rgba(253, 250, 244, 0.2),
+        0 4px 12px rgba(74, 47, 34, 0.2);
+    text-shadow: 0.5px 0.5px 1px rgba(74, 47, 34, 0.3);
 }
 
 /* ステータスバッジ */

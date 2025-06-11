@@ -46,7 +46,7 @@ const Summary = ({ storeId }) => {
     return (
         <div className="summary-container card">
             <div className="card-header">
-                <div className="summary-icon">📊</div>
+                <div className="summary-icon">📈</div>
                 <h2>今日の店舗状況</h2>
             </div>
             
