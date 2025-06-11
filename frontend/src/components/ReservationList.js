@@ -67,10 +67,10 @@ const ReservationList = ({ storeId }) => {
     };
 
     const getStatusBadge = (status, source) => {
-        const statusConfig = {
-            confirmed: { label: '確定', color: '#28a745', bg: '#d4edda' },
-            cancelled: { label: 'キャンセル', color: '#dc3545', bg: '#f8d7da' },
-            pending: { label: '保留', color: '#ffc107', bg: '#fff3cd' }
+        const statusClasses = {
+            confirmed: 'success',
+            cancelled: 'error',
+            pending: 'warning'
         };
 
         const sourceConfig = {
@@ -79,24 +79,23 @@ const ReservationList = ({ storeId }) => {
             phone: { label: '電話', icon: '📞' }
         };
 
-        const statusStyle = statusConfig[status] || statusConfig.confirmed;
+        const statusClass = statusClasses[status] || 'success';
         const sourceInfo = sourceConfig[source] || sourceConfig.web;
+        const statusLabels = {
+            confirmed: '確定',
+            cancelled: 'キャンセル',
+            pending: '保留'
+        };
 
         return (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: statusStyle.color,
-                    backgroundColor: statusStyle.bg
-                }}>
-                    {statusStyle.label}
+                <span className={`status-badge ${statusClass}`}>
+                    {statusLabels[status] || '確定'}
                 </span>
                 <span style={{
                     fontSize: '11px',
-                    color: '#666',
+                    color: 'var(--color-text)',
+                    opacity: 0.7,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '2px'
@@ -148,19 +147,13 @@ const ReservationList = ({ storeId }) => {
                         alignItems: 'center',
                         gap: '8px'
                     }}>
-                        <div style={{
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            backgroundColor: businessStatus.is_open ? '#d4edda' : '#f8d7da',
-                            color: businessStatus.is_open ? '#155724' : '#721c24'
-                        }}>
+                        <span className={`status-badge ${businessStatus.is_open ? 'success' : 'error'}`}>
                             {businessStatus.is_open ? '🟢 営業中' : '🔴 営業時間外'}
-                        </div>
+                        </span>
                         <div style={{
                             fontSize: '11px',
-                            color: '#666'
+                            color: 'var(--color-text)',
+                            opacity: 0.7
                         }}>
                             {businessStatus.operating_hours && 
                                 `${businessStatus.operating_hours.start}〜${businessStatus.operating_hours.end}`
@@ -171,27 +164,16 @@ const ReservationList = ({ storeId }) => {
             </div>
 
             {/* 日付選択 */}
-            <div style={{
-                display: 'flex',
-                gap: '8px',
-                marginBottom: '20px',
-                flexWrap: 'wrap'
-            }}>
+            <div className="action-button-group" style={{ marginBottom: '20px' }}>
                 {['today', 'tomorrow'].map(period => (
                     <button
                         key={period}
                         onClick={() => setSelectedDate(period)}
+                        className="action-button"
                         style={{
-                            padding: '8px 16px',
-                            border: '2px solid',
-                            borderColor: selectedDate === period ? '#007bff' : '#dee2e6',
-                            backgroundColor: selectedDate === period ? '#007bff' : 'white',
-                            color: selectedDate === period ? 'white' : '#333',
-                            borderRadius: '20px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s'
+                            backgroundColor: selectedDate === period ? 'var(--color-accent)' : 'var(--color-card)',
+                            color: selectedDate === period ? 'white' : 'var(--color-text)',
+                            borderColor: selectedDate === period ? 'var(--color-accent)' : 'var(--color-border)'
                         }}
                     >
                         {getDateLabel(period)}
@@ -201,8 +183,10 @@ const ReservationList = ({ storeId }) => {
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <div style={{ fontSize: '32px', marginBottom: '16px' }}>⏳</div>
-                    <p>予約データを読み込み中...</p>
+                    <div className="loading-text">
+                        <div className="loading-spinner"></div>
+                        <span>予約データを読み込み中...</span>
+                    </div>
                 </div>
             ) : reservations.length === 0 ? (
                 <div style={{ 
@@ -223,49 +207,24 @@ const ReservationList = ({ storeId }) => {
             ) : (
                 <div>
                     {/* 予約概要 */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                        gap: '12px',
-                        marginBottom: '24px'
-                    }}>
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '16px',
-                            backgroundColor: '#e3f2fd',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>
-                                {reservations.length}
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>
-                                総予約数
-                            </div>
+                    <div className="info-grid">
+                        <div className="info-card">
+                            <div className="info-icon">📅</div>
+                            <div className="info-title">総予約数</div>
+                            <div className="stat-number">{reservations.length}</div>
                         </div>
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '16px',
-                            backgroundColor: '#f3e5f5',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7b1fa2' }}>
+                        <div className="info-card">
+                            <div className="info-icon">👥</div>
+                            <div className="info-title">総人数</div>
+                            <div className="stat-number">
                                 {reservations.reduce((total, res) => total + res.party_size, 0)}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>
-                                総人数
-                            </div>
                         </div>
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '16px',
-                            backgroundColor: '#e8f5e8',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>
+                        <div className="info-card">
+                            <div className="info-icon">💬</div>
+                            <div className="info-title">チャット予約</div>
+                            <div className="stat-number">
                                 {reservations.filter(res => res.source === 'chatbot').length}
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>
-                                チャット予約
                             </div>
                         </div>
                     </div>

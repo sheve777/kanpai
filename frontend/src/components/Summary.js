@@ -2,19 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
 
-const SummaryCard = ({ title, value, change, icon }) => {
+const SummaryCard = ({ title, value, change, icon, trend }) => {
     const isPositive = change >= 0;
     const changeText = isPositive ? `+${change}%` : `${change}%`;
+    const trendClass = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+    
     return (
-        <div className="summary-card">
-            <div className="summary-icon">{icon}</div>
-            <div className="summary-content">
-                <p className="summary-title">{title}</p>
-                <p className="summary-value">{value}</p>
-                <p className={`summary-change ${isPositive ? 'positive' : 'negative'}`}>
-                    昨日比: {changeText}
-                </p>
-            </div>
+        <div className="info-card">
+            <div className="info-icon">{icon}</div>
+            <div className="info-title">{title}</div>
+            <div className="stat-number">{value}</div>
+            <span className={`stat-trend ${trendClass}`}>
+                昨日比: {changeText}
+            </span>
         </div>
     );
 };
@@ -44,13 +44,61 @@ const Summary = ({ storeId }) => {
     }
 
     return (
-        <div className="summary-container">
-            <SummaryCard title="本日の予約件数" value={`${total_groups_today}件`} change={reservationChange} icon="📅" />
-            <div className="todo-card">
-                <h3>📢 お知らせ・TODO</h3>
-                <ul>
-                    <li>新しい月次レポートが届いています！</li>
-                    <li>LINE配信の上限まであと3回です。</li>
+        <div className="summary-container card">
+            <div className="card-header">
+                <div className="summary-icon">📊</div>
+                <h2>今日の店舗状況</h2>
+            </div>
+            
+            <div className="info-grid">
+                <SummaryCard 
+                    title="本日の予約件数" 
+                    value={`${total_groups_today}`} 
+                    change={reservationChange} 
+                    icon="📅" 
+                />
+                <div className="info-card">
+                    <div className="info-icon">👥</div>
+                    <div className="info-title">予約人数</div>
+                    <div className="stat-number">
+                        {today_reservations?.reduce((total, res) => total + res.party_size, 0) || 0}
+                    </div>
+                    <span className="stat-trend neutral">本日合計</span>
+                </div>
+                <div className="info-card">
+                    <div className="info-icon">💬</div>
+                    <div className="info-title">チャット対応</div>
+                    <div className="stat-number">12</div>
+                    <span className="stat-trend positive">昨日比: +25%</span>
+                </div>
+            </div>
+
+            <div className="section-divider"></div>
+
+            <div style={{ marginTop: '20px' }}>
+                <h4 style={{ 
+                    margin: '0 0 16px 0', 
+                    color: 'var(--color-text)', 
+                    fontSize: '1.1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    📢 お知らせ・TODO
+                </h4>
+                <ul className="data-list">
+                    <li className="data-list-item">
+                        <span className="item-label">✨ 新しい月次レポートが届いています</span>
+                        <span className="status-badge info">New</span>
+                    </li>
+                    <li className="data-list-item">
+                        <span className="item-label">⚠️ LINE配信の上限まであと3回です</span>
+                        <span className="status-badge warning">注意</span>
+                    </li>
+                    <li className="data-list-item">
+                        <span className="item-label">🎯 チャットボット使用量: 75%</span>
+                        <span className="status-badge success">正常</span>
+                    </li>
                 </ul>
             </div>
         </div>
