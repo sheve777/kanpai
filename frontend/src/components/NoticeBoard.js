@@ -79,23 +79,20 @@ const NoticeBoard = ({ storeId }) => {
                 }
             }
 
-            // 静的なお知らせ（例）
-            const staticNotices = [
-                {
-                    id: 'new_report',
-                    icon: '✨',
-                    message: '新しい月次レポートが届いています',
-                    badge: 'info',
-                    priority: 4
-                },
-                {
-                    id: 'system_maintenance',
-                    icon: '🔧',
-                    message: '6/15 深夜2:00-4:00 システムメンテナンス予定',
-                    badge: 'info',
-                    priority: 5
-                }
-            ];
+            // 静的なお知らせ（重要度の高いもののみ）
+            const staticNotices = [];
+            
+            // 例: 新着レポートがある場合のみ追加
+            // TODO: 実際のAPIから新着レポートの有無を取得
+            // if (hasNewReport) {
+            //     staticNotices.push({
+            //         id: 'new_report',
+            //         icon: '✨',
+            //         message: '新しい月次レポートが届いています',
+            //         badge: 'info',
+            //         priority: 4
+            //     });
+            // }
 
             // 通知を優先度順にソート
             const allNotices = [...dynamicNotices, ...staticNotices]
@@ -166,6 +163,11 @@ const NoticeBoard = ({ storeId }) => {
         );
     }
 
+    // 重要な通知がない場合は何も表示しない
+    if (notices.length === 0) {
+        return null;
+    }
+
     return (
         <div className="card notice-board-container">
             <div className="card-header">
@@ -190,38 +192,26 @@ const NoticeBoard = ({ storeId }) => {
                 )}
             </div>
 
-            {notices.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '30px 20px',
-                    color: 'var(--color-text-secondary)'
-                }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '10px' }}>✅</div>
-                    <p>現在お知らせはありません</p>
-                    <p style={{ fontSize: '0.9rem' }}>すべて順調に稼働中です！</p>
-                </div>
-            ) : (
-                <ul className="data-list" style={{ margin: 0 }}>
-                    {notices.map((notice) => (
-                        <li key={notice.id} className="data-list-item">
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                flex: 1,
-                                gap: '8px'
-                            }}>
-                                <span style={{ fontSize: '1.2rem' }}>{notice.icon}</span>
-                                <span className="item-label" style={{ flex: 1 }}>
-                                    {notice.message}
-                                </span>
-                            </div>
-                            <span className={getBadgeClass(notice.badge)}>
-                                {getBadgeText(notice.badge)}
+            <ul className="data-list" style={{ margin: 0 }}>
+                {notices.map((notice) => (
+                    <li key={notice.id} className="data-list-item">
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            flex: 1,
+                            gap: '8px'
+                        }}>
+                            <span style={{ fontSize: '1.2rem' }}>{notice.icon}</span>
+                            <span className="item-label" style={{ flex: 1 }}>
+                                {notice.message}
                             </span>
-                        </li>
-                    ))}
-                </ul>
-            )}
+                        </div>
+                        <span className={getBadgeClass(notice.badge)}>
+                            {getBadgeText(notice.badge)}
+                        </span>
+                    </li>
+                ))}
+            </ul>
 
             {notices.length > 0 && (
                 <div style={{ 

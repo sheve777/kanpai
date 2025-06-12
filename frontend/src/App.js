@@ -5,7 +5,7 @@ import NoticeBoard from './components/NoticeBoard';
 import UsageStatus from './components/UsageStatus';
 import ReservationList from './components/ReservationList';
 import LineBroadcast from './components/LineBroadcast';
-import MenuList from './components/MenuList';
+import MenuWidget from './components/MenuWidget';
 import ReportList from './components/ReportList';
 import BillingPage from './components/BillingPage';
 import AdditionalServices from './components/AdditionalServices';
@@ -56,7 +56,7 @@ function App() {
           <ReservationList storeId={storeId} />
           <LineBroadcast storeId={storeId} />
           <AdditionalServices storeId={storeId} />
-          <MenuList storeId={storeId} />
+          <MenuWidget storeId={storeId} />
           <UsageStatus storeId={storeId} />
           <ReportList storeId={storeId} onSelectReport={handleSelectReport} />
           <BasicInfo />

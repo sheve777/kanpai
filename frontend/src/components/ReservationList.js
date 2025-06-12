@@ -7,11 +7,21 @@ const ReservationList = ({ storeId }) => {
     const [selectedDate, setSelectedDate] = useState('today');
     const [loading, setLoading] = useState(true);
     const [businessStatus, setBusinessStatus] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
     useEffect(() => {
         fetchReservations();
         fetchBusinessStatus();
     }, [storeId, selectedDate]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 600);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const fetchBusinessStatus = async () => {
         try {
@@ -204,7 +214,142 @@ const ReservationList = ({ storeId }) => {
                         新しい予約が入ると、ここに表示されます
                     </p>
                 </div>
+            ) : isMobile ? (
+                // スマホ用シンプルリスト表示
+                <div>
+                    {/* 予約概要 */}
+                    <div className="mobile-summary" style={{
+                        padding: '16px',
+                        backgroundColor: 'rgba(185, 58, 58, 0.08)',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ 
+                            fontSize: '1.1rem',
+                            fontWeight: '600',
+                            color: 'var(--color-text)'
+                        }}>
+                            📊 {getDateLabel(selectedDate)}: {reservations.length}組 {reservations.reduce((total, res) => total + res.party_size, 0)}名
+                        </div>
+                    </div>
+
+                    {/* シンプル予約リスト */}
+                    <div className="mobile-reservation-list" style={{ display: 'grid', gap: '12px' }}>
+                        {reservations
+                            .sort((a, b) => a.reservation_time.localeCompare(b.reservation_time))
+                            .map(reservation => (
+                            <div
+                                key={reservation.id}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '16px',
+                                    backgroundColor: 'var(--color-card)',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--color-border)',
+                                    gap: '12px',
+                                    boxShadow: '0 2px 4px rgba(74, 47, 34, 0.1)'
+                                }}
+                            >
+                                <div style={{ 
+                                    fontSize: '1.1rem',
+                                    fontWeight: '600',
+                                    color: 'var(--color-accent)',
+                                    minWidth: '50px'
+                                }}>
+                                    🕐 {reservation.reservation_time.substring(0, 5)}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        marginBottom: '4px'
+                                    }}>
+                                        <span style={{
+                                            fontWeight: '600',
+                                            color: 'var(--color-text)'
+                                        }}>
+                                            {reservation.customer_name}様
+                                        </span>
+                                        <span style={{
+                                            fontSize: '0.9rem',
+                                            color: 'var(--color-text-secondary)',
+                                            backgroundColor: 'rgba(74, 47, 34, 0.1)',
+                                            padding: '2px 8px',
+                                            borderRadius: '12px'
+                                        }}>
+                                            {reservation.party_size}名
+                                        </span>
+                                        {reservation.seat_type_name && (
+                                            <span style={{
+                                                fontSize: '0.8rem',
+                                                color: 'var(--color-text-secondary)'
+                                            }}>
+                                                {reservation.seat_type_name}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {reservation.notes && (
+                                        <div style={{
+                                            fontSize: '0.8rem',
+                                            color: 'var(--color-text-secondary)',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            💬 {reservation.notes}
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px'
+                                }}>
+                                    <button
+                                        onClick={() => {
+                                            const tel = reservation.customer_phone;
+                                            if (tel) window.open(`tel:${tel}`);
+                                        }}
+                                        style={{
+                                            padding: '8px 12px',
+                                            fontSize: '0.8rem',
+                                            backgroundColor: 'var(--color-positive)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            minWidth: '44px',
+                                            minHeight: '44px'
+                                        }}
+                                        title="電話をかける"
+                                    >
+                                        📞
+                                    </button>
+                                    <button
+                                        onClick={() => handleCancelReservation(reservation.id, reservation.customer_name)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            fontSize: '0.8rem',
+                                            backgroundColor: 'var(--color-negative)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            minWidth: '44px',
+                                            minHeight: '44px'
+                                        }}
+                                        title="予約をキャンセル"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             ) : (
+                // PC/タブレット用タイムライン表示（既存）
                 <div>
                     {/* 予約概要 */}
                     <div className="info-grid">

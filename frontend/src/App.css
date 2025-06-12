@@ -64,6 +64,7 @@ main {
     .line-broadcast-container { grid-column: 1 / 4; }
     .additional-services-container { grid-column: 4 / -1; }
     .menu-list-container { grid-column: 1 / -1; }
+    .menu-widget-container { grid-column: 1 / -1; }
     .report-list-container { grid-column: 1 / -1; }
     .basic-info-container { grid-column: 1 / 4; }
     .billing-container { grid-column: 4 / -1; }
@@ -81,6 +82,7 @@ main {
     .line-broadcast-container { grid-column: 1 / 7; }
     .additional-services-container { grid-column: 7 / -1; }
     .menu-list-container { grid-column: 1 / -1; }
+    .menu-widget-container { grid-column: 1 / -1; }
     .report-list-container { grid-column: 1 / -1; }
     .basic-info-container { grid-column: 1 / 7; }
     .billing-container { grid-column: 7 / -1; }
@@ -732,6 +734,20 @@ main {
     
     .notice-board-container .item-label {
         font-size: 0.9rem !important;
+    }
+    
+    /* MenuWidget mobile optimizations */
+    .menu-actions-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+    
+    .menu-action-button {
+        padding: 12px 8px !important;
+    }
+    
+    .menu-action-button:hover {
+        transform: none !important;
     }
 }
 
