@@ -1,7 +1,12 @@
 // C:\Users\acmsh\kanpAI\backend\src\middlewares\auth.js
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'kanpai-secret-key-2025';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET環境変数が設定されていません');
+  throw new Error('JWT_SECRET環境変数が必須です');
+}
 
 /**
  * JWT認証ミドルウェア

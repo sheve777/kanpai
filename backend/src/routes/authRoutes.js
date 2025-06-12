@@ -7,8 +7,17 @@ import pool from '../config/db.js';
 const router = express.Router();
 
 // JWT シークレットキー（本番環境では環境変数から取得）
-const JWT_SECRET = process.env.JWT_SECRET || 'kanpai-secret-key-2025';
-const JWT_EXPIRES_IN = '7d'; // 7日間有効
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET環境変数が設定されていません');
+  throw new Error('JWT_SECRET環境変数が必須です');
+}
+const JWT_EXPIRES_IN = '7d';
+
+// デモモード設定
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
+const DEMO_PASSWORDS = process.env.DEMO_PASSWORDS ? process.env.DEMO_PASSWORDS.split(',') : []; // 7日間有効
 
 // ログインエンドポイント
 router.post('/login', async (req, res) => {
@@ -63,10 +72,11 @@ router.post('/login', async (req, res) => {
             // データベースエラーを無視してデモモードで続行
         }
 
-            // デモ環境用: password_hashがない場合は仮パスワードで認証
+            // パスワード検証
             if (!store.password_hash) {
-                if (password === 'kanpai123' || password === 'demo') {
-                    // デモ認証成功
+                // デモモードが有効で、デモパスワードが設定されている場合のみ許可
+                if (DEMO_MODE && DEMO_PASSWORDS.length > 0 && DEMO_PASSWORDS.includes(password)) {
+                    console.log('📝 デモモード認証成功');
                 } else {
                     return res.status(401).json({ 
                         success: false,

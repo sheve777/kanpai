@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders login page', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByRole('heading', { name: /kanpAI/i });
+  expect(titleElement).toBeInTheDocument();
+  
+  const loginButton = screen.getByRole('button', { name: /ログイン/i });
+  expect(loginButton).toBeInTheDocument();
+  
+  const passwordInput = screen.getByPlaceholderText(/パスワードを入力/i);
+  expect(passwordInput).toBeInTheDocument();
 });

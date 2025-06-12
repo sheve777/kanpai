@@ -22,7 +22,7 @@ const LoginPage = ({ onLogin }) => {
                 throw new Error('パスワードを入力してください');
             }
 
-            console.log('🔐 ログイン試行:', { storeId, password: '***' });
+            // ログイン試行（本番環境ではログを削除すること）
 
             // JWT認証APIを呼び出し
             const response = await api.post('/api/auth/login', { storeId, password });
