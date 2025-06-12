@@ -1,6 +1,5 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\UsageStatus.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../utils/axiosConfig.js';
 
 const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
@@ -238,7 +237,6 @@ const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats }) => {
 };
 
 const UsageStatus = ({ storeId }) => {
-    const navigate = useNavigate();
     const [status, setStatus] = useState(null);
     const [showLineDetails, setShowLineDetails] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -297,8 +295,8 @@ const UsageStatus = ({ storeId }) => {
     const handleAlertButtonClick = (alertLevel) => {
         switch (alertLevel) {
             case 'critical':
-                // 解決方法を見る
-                navigate('/help/line-limit-reached');
+                // 解決方法を見る - モーダルまたは外部リンクで対応
+                alert('LINE制限に達しました。サポートにお問い合わせください。\n\n📞 サポート連絡: support@kanpai.com\n💡 プランアップグレードで制限を拡張できます。');
                 break;
             case 'warning':
                 // 今すぐ確認
