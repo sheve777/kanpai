@@ -54,6 +54,10 @@ const ReportDetailPage = ({ reportId, onBack }) => {
             linebroadcasts: { value: 0, change: '', trend: 'neutral' }
         };
 
+        if (!content || typeof content !== 'string') {
+            return stats;
+        }
+
         const lines = content.split('\n');
         lines.forEach(line => {
             if (line.includes('チャット対応:') || line.includes('チャット件数:')) {
@@ -88,6 +92,11 @@ const ReportDetailPage = ({ reportId, onBack }) => {
     // 質問ランキングを抽出
     const parseQuestions = (content) => {
         const questions = [];
+        
+        if (!content || typeof content !== 'string') {
+            return questions;
+        }
+        
         const lines = content.split('\n');
         let inQuestionSection = false;
 
@@ -119,6 +128,11 @@ const ReportDetailPage = ({ reportId, onBack }) => {
     // メニューランキングを抽出
     const parseMenus = (content) => {
         const menus = [];
+        
+        if (!content || typeof content !== 'string') {
+            return menus;
+        }
+        
         const lines = content.split('\n');
         let inMenuSection = false;
 
@@ -259,9 +273,9 @@ const ReportDetailPage = ({ reportId, onBack }) => {
         );
     }
 
-    const stats = parseStatistics(report.report_content);
-    const questions = parseQuestions(report.report_content);
-    const menus = parseMenus(report.report_content);
+    const stats = parseStatistics(report?.report_content || '');
+    const questions = parseQuestions(report?.report_content || '');
+    const menus = parseMenus(report?.report_content || '');
 
     return (
         <div style={{

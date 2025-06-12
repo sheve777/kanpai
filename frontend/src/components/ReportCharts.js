@@ -38,6 +38,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
     useEffect(() => {
         const fetchChartData = async () => {
             if (!reportData || !reportData.id) {
+                console.log('ReportCharts: reportData or reportData.id is missing', { reportData });
                 setLoading(false);
                 return;
             }
@@ -115,16 +116,25 @@ const ReportCharts = ({ reportData, reportMonth }) => {
 
     if (!chartData) return null;
 
+    // データの安全性チェック
+    const safeChartData = {
+        monthlyTrend: chartData.monthlyTrend || [],
+        weekdayAnalysis: chartData.weekdayAnalysis || [],
+        hourlyAnalysis: chartData.hourlyAnalysis || [],
+        customerAnalysis: chartData.customerAnalysis || { new: 0, returning: 0, total: 0 },
+        lineEffectiveness: chartData.lineEffectiveness || { sameDay: 0, nextDay: 0, within3Days: 0 }
+    };
+
     // 月別推移グラフのデータ
     const monthlyTrendData = {
-        labels: chartData.monthlyTrend.map(d => {
+        labels: safeChartData.monthlyTrend.map(d => {
             const date = new Date(d.month + '-01');
             return date.toLocaleDateString('ja-JP', { month: 'short' });
         }),
         datasets: [
             {
                 label: 'チャット対応',
-                data: chartData.monthlyTrend.map(d => d.chat),
+                data: safeChartData.monthlyTrend.map(d => d.chat || 0),
                 borderColor: 'rgb(99, 102, 241)',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 tension: 0.4,
@@ -132,7 +142,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
             },
             {
                 label: '予約受付',
-                data: chartData.monthlyTrend.map(d => d.reservation),
+                data: safeChartData.monthlyTrend.map(d => d.reservation || 0),
                 borderColor: 'rgb(34, 197, 94)',
                 backgroundColor: 'rgba(34, 197, 94, 0.1)',
                 tension: 0.4,
@@ -140,7 +150,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
             },
             {
                 label: 'LINE配信',
-                data: chartData.monthlyTrend.map(d => d.line),
+                data: safeChartData.monthlyTrend.map(d => d.line || 0),
                 borderColor: 'rgb(251, 146, 60)',
                 backgroundColor: 'rgba(251, 146, 60, 0.1)',
                 tension: 0.4,
@@ -208,8 +218,8 @@ const ReportCharts = ({ reportData, reportMonth }) => {
     // 曜日別予約分析
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
     const weekdayDataMap = {};
-    chartData.weekdayAnalysis.forEach(d => {
-        weekdayDataMap[d.weekday] = d.count;
+    safeChartData.weekdayAnalysis.forEach(d => {
+        weekdayDataMap[d.weekday] = d.count || 0;
     });
     
     const weekdayData = {
@@ -329,8 +339,8 @@ const ReportCharts = ({ reportData, reportMonth }) => {
 
     // 時間帯別ヒートマップデータ
     const hourlyHeatmapData = {};
-    chartData.hourlyAnalysis.forEach(d => {
-        hourlyHeatmapData[`${d.hour}:00`] = d.count;
+    safeChartData.hourlyAnalysis.forEach(d => {
+        hourlyHeatmapData[`${d.hour}:00`] = d.count || 0;
     });
 
     const getHeatmapColor = (value) => {
@@ -576,7 +586,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                             color: 'white'
                         }}>
                             <div style={{ fontSize: '32px', fontWeight: '700' }}>
-                                {chartData.customerAnalysis.new}
+                                {safeChartData.customerAnalysis.new}
                             </div>
                             <div style={{ fontSize: '14px', opacity: 0.9 }}>
                                 新規顧客
@@ -590,7 +600,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                             color: 'white'
                         }}>
                             <div style={{ fontSize: '32px', fontWeight: '700' }}>
-                                {chartData.customerAnalysis.returning}
+                                {safeChartData.customerAnalysis.returning}
                             </div>
                             <div style={{ fontSize: '14px', opacity: 0.9 }}>
                                 既存顧客
@@ -605,10 +615,10 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                         textAlign: 'center'
                     }}>
                         <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
-                            リピート率: {((chartData.customerAnalysis.returning / chartData.customerAnalysis.total) * 100).toFixed(1)}%
+                            リピート率: {safeChartData.customerAnalysis.total > 0 ? ((safeChartData.customerAnalysis.returning / safeChartData.customerAnalysis.total) * 100).toFixed(1) : 0}%
                         </div>
                         <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
-                            総顧客数: {chartData.customerAnalysis.total}名
+                            総顧客数: {safeChartData.customerAnalysis.total}名
                         </div>
                     </div>
                     
@@ -656,7 +666,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                         }}>
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>配信当日の予約</span>
                             <span style={{ fontSize: '18px', fontWeight: '700', color: '#22c55e' }}>
-                                {chartData.lineEffectiveness.sameDay}件
+                                {safeChartData.lineEffectiveness.sameDay}件
                             </span>
                         </div>
                         
@@ -670,7 +680,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                         }}>
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>翌日の予約</span>
                             <span style={{ fontSize: '18px', fontWeight: '700', color: '#fb923c' }}>
-                                {chartData.lineEffectiveness.nextDay}件
+                                {safeChartData.lineEffectiveness.nextDay}件
                             </span>
                         </div>
                         
@@ -684,7 +694,7 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                         }}>
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>3日以内の予約</span>
                             <span style={{ fontSize: '18px', fontWeight: '700', color: '#6366f1' }}>
-                                {chartData.lineEffectiveness.within3Days}件
+                                {safeChartData.lineEffectiveness.within3Days}件
                             </span>
                         </div>
                     </div>
@@ -697,10 +707,10 @@ const ReportCharts = ({ reportData, reportMonth }) => {
                         border: '1px solid rgba(34, 197, 94, 0.2)'
                     }}>
                         <div style={{ fontSize: '14px', fontWeight: '600', color: '#059669' }}>
-                            配信効果率: {((chartData.lineEffectiveness.within3Days / (chartData.monthlyTrend[chartData.monthlyTrend.length - 1]?.line || 1)) * 100).toFixed(1)}%
+                            配信効果率: {safeChartData.monthlyTrend.length > 0 && safeChartData.monthlyTrend[safeChartData.monthlyTrend.length - 1]?.line > 0 ? ((safeChartData.lineEffectiveness.within3Days / safeChartData.monthlyTrend[safeChartData.monthlyTrend.length - 1].line) * 100).toFixed(1) : 0}%
                         </div>
                         <div style={{ fontSize: '12px', color: '#059669', marginTop: '4px', opacity: 0.8 }}>
-                            1回の配信で平均{(chartData.lineEffectiveness.within3Days / (chartData.monthlyTrend[chartData.monthlyTrend.length - 1]?.line || 1)).toFixed(1)}件の予約効果
+                            1回の配信で平均{safeChartData.monthlyTrend.length > 0 && safeChartData.monthlyTrend[safeChartData.monthlyTrend.length - 1]?.line > 0 ? (safeChartData.lineEffectiveness.within3Days / safeChartData.monthlyTrend[safeChartData.monthlyTrend.length - 1].line).toFixed(1) : 0}件の予約効果
                         </div>
                     </div>
                     
