@@ -1,7 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\App.js
 import React, { useState } from 'react';
 import Header from './components/Header';
-import Summary from './components/Summary';
+import QuickStats from './components/QuickStats';
 import UsageStatus from './components/UsageStatus';
 import ReservationList from './components/ReservationList';
 import LineBroadcast from './components/LineBroadcast';
@@ -52,7 +52,7 @@ function App() {
       
       {currentPage === 'dashboard' ? (
         <main>
-          <Summary storeId={storeId} />
+          <QuickStats storeId={storeId} />
           <ReservationList storeId={storeId} />
           <LineBroadcast storeId={storeId} />
           <AdditionalServices storeId={storeId} />

@@ -689,6 +689,100 @@ main {
     }
 }
 
+/* ★★★ QUICK STATS COMPONENT STYLES ★★★ */
+.quick-stats-container {
+    order: -1; /* ダッシュボードの最上部に表示 */
+}
+
+.reservations-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.reservation-item {
+    transition: all 0.2s ease;
+}
+
+.reservation-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 47, 34, 0.15);
+}
+
+.reservation-summary {
+    background: linear-gradient(135deg, rgba(185, 58, 58, 0.1), rgba(185, 58, 58, 0.05));
+    border-left: 4px solid var(--color-accent);
+}
+
+.quick-actions {
+    border-top: 1px solid var(--color-border);
+    padding-top: 16px;
+}
+
+.quick-actions button {
+    transition: all 0.3s ease;
+}
+
+.quick-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 47, 34, 0.2);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-border);
+    border-top: 3px solid var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mobile optimizations for QuickStats */
+@media (max-width: 600px) {
+    .reservation-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 6px !important;
+    }
+    
+    .reservation-item > span {
+        min-width: auto !important;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+    
+    .quick-actions button {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    .reservation-summary {
+        text-align: center;
+    }
+    
+    .reservations-list {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .reservation-item {
+        padding: 10px 12px !important;
+    }
+    
+    .quick-stats-container .card-header h2 {
+        font-size: 1.2rem !important;
+    }
+}
+
 .stat-label {
     font-size: 13px;
     color: #666;
