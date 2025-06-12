@@ -1,14 +1,26 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\BasicInfo.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const InfoRow = ({ icon, label, value, editable = true }) => {
+const InfoRow = ({ icon, label, value, field, onSave, editable = true }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = () => {
-        // TODO: API呼び出しで保存
-        console.log(`${label}を${editValue}に変更`);
-        setIsEditing(false);
+    useEffect(() => {
+        setEditValue(value);
+    }, [value]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await onSave(field, editValue);
+            setIsEditing(false);
+        } catch (error) {
+            console.error('保存エラー:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancel = () => {
@@ -104,17 +116,19 @@ const InfoRow = ({ icon, label, value, editable = true }) => {
                     />
                     <button 
                         onClick={handleSave}
+                        disabled={isSaving}
                         className="action-button"
                         style={{ 
                             padding: '6px 12px',
                             fontSize: '0.8rem',
-                            backgroundColor: 'var(--color-positive)',
-                            borderColor: 'var(--color-positive)',
+                            backgroundColor: isSaving ? '#ccc' : 'var(--color-positive)',
+                            borderColor: isSaving ? '#ccc' : 'var(--color-positive)',
                             color: 'white',
-                            minWidth: 'auto'
+                            minWidth: 'auto',
+                            cursor: isSaving ? 'not-allowed' : 'pointer'
                         }}
                     >
-                        💾
+                        {isSaving ? '...' : '💾'}
                     </button>
                     <button 
                         onClick={handleCancel}
@@ -134,6 +148,98 @@ const InfoRow = ({ icon, label, value, editable = true }) => {
 };
 
 const BasicInfo = () => {
+    const [storeInfo, setStoreInfo] = useState({
+        name: '和風ダイニング 雅',
+        phone: '03-1234-5678',
+        address: '東京都新宿区歌舞伎町1-1-1',
+        paymentMethods: '現金・各種カード・PayPay・LINE Pay',
+        concept: 'こだわりの日本酒と創作料理を楽しめる隠れ家的な和風ダイニング',
+        operatingHours: 'ランチ 11:30-14:30 / ディナー 17:30-23:00 (L.O. 22:30)'
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // 仮のstoreId - 実際の実装では適切に取得する必要があります
+    const storeId = 1;
+
+    useEffect(() => {
+        fetchStoreInfo();
+    }, []);
+
+    const fetchStoreInfo = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`/api/stores/${storeId}/info`);
+            if (response.data) {
+                setStoreInfo({
+                    name: response.data.name || storeInfo.name,
+                    phone: response.data.phone || storeInfo.phone,
+                    address: response.data.address || storeInfo.address,
+                    paymentMethods: storeInfo.paymentMethods, // APIから取得できない場合はデフォルト値
+                    concept: response.data.concept || storeInfo.concept,
+                    operatingHours: response.data.operating_hours || storeInfo.operatingHours
+                });
+            }
+        } catch (error) {
+            console.error('店舗情報の取得に失敗しました:', error);
+            setError('店舗情報の取得に失敗しました');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async (field, value) => {
+        try {
+            const updateData = {};
+            
+            // フィールド名のマッピング
+            const fieldMapping = {
+                phone: 'phone',
+                address: 'address',
+                concept: 'concept',
+                operatingHours: 'operating_hours'
+            };
+            
+            if (fieldMapping[field]) {
+                updateData[fieldMapping[field]] = value;
+            }
+            
+            const response = await axios.put(`/api/stores/${storeId}`, updateData);
+            
+            if (response.data.success) {
+                setStoreInfo(prev => ({ ...prev, [field]: value }));
+                // 成功メッセージを表示（後でトースト通知に置き換え）
+                console.log('情報を更新しました');
+            }
+        } catch (error) {
+            console.error('更新エラー:', error);
+            throw error;
+        }
+    };
+
+    const handleContactSupport = () => {
+        // サポート連絡の処理
+        console.log('サポートに連絡');
+        // TODO: モーダル表示またはメールリンク
+    };
+
+    const handleUpdateAllInfo = () => {
+        // 全情報更新の処理
+        console.log('情報を更新');
+        // TODO: 編集モードの一括切り替え
+    };
+
+    if (loading) {
+        return (
+            <div className="card basic-info-container">
+                <div style={{ padding: '40px', textAlign: 'center' }}>
+                    <div className="spinner"></div>
+                    <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>読み込み中...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="card basic-info-container">
             <div className="card-header">
@@ -145,28 +251,38 @@ const BasicInfo = () => {
                 <InfoRow 
                     icon="📞" 
                     label="電話番号" 
-                    value="03-1234-5678" 
+                    value={storeInfo.phone}
+                    field="phone"
+                    onSave={handleSave}
                 />
                 <InfoRow 
                     icon="📍" 
                     label="住所" 
-                    value="東京都新宿区歌舞伎町1-1-1" 
+                    value={storeInfo.address}
+                    field="address"
+                    onSave={handleSave}
                 />
                 <InfoRow 
                     icon="💳" 
                     label="支払い方法" 
-                    value="現金・各種カード・PayPay・LINE Pay" 
+                    value={storeInfo.paymentMethods}
+                    field="paymentMethods"
+                    onSave={handleSave}
+                    editable={false}
                 />
                 <InfoRow 
                     icon="📝" 
                     label="店舗紹介" 
-                    value="昭和レトロな雰囲気が自慢の居酒屋です。新鮮な食材と心温まるおもてなしでお待ちしております。" 
+                    value={storeInfo.concept}
+                    field="concept"
+                    onSave={handleSave}
                 />
                 <InfoRow 
                     icon="🕐" 
                     label="営業時間" 
-                    value="17:00 - 24:00（ラストオーダー23:30）" 
-                    editable={false}
+                    value={storeInfo.operatingHours}
+                    field="operatingHours"
+                    onSave={handleSave}
                 />
                 <InfoRow 
                     icon="📅" 
@@ -206,10 +322,18 @@ const BasicInfo = () => {
             <div className="section-divider"></div>
 
             <div className="action-button-group">
-                <button className="secondary-button" style={{ flex: 1 }}>
+                <button 
+                    className="secondary-button" 
+                    style={{ flex: 1 }}
+                    onClick={handleContactSupport}
+                >
                     📧 サポートに連絡
                 </button>
-                <button className="action-button" style={{ flex: 1 }}>
+                <button 
+                    className="action-button" 
+                    style={{ flex: 1 }}
+                    onClick={handleUpdateAllInfo}
+                >
                     🔄 情報を更新
                 </button>
             </div>

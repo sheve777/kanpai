@@ -1,5 +1,6 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\UsageStatus.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/axiosConfig.js';
 
 const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
@@ -66,7 +67,7 @@ const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
     );
 };
 
-const LineUsageAlert = ({ lineStatus, friendsCount }) => {
+const LineUsageAlert = ({ lineStatus, friendsCount, onButtonClick }) => {
     if (!lineStatus || lineStatus.alertLevel === 'normal') return null;
 
     const getAlertConfig = () => {
@@ -110,7 +111,10 @@ const LineUsageAlert = ({ lineStatus, friendsCount }) => {
                 <span className="alert-title">{alertConfig.title}</span>
             </div>
             <div className="alert-message">{alertConfig.message}</div>
-            <button className="alert-button">
+            <button 
+                className="alert-button"
+                onClick={() => onButtonClick(lineStatus.alertLevel)}
+            >
                 {alertConfig.buttonText}
             </button>
         </div>
@@ -199,10 +203,14 @@ const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats }) => {
                                     kanpAI代行サービス: 10,000円（税込）
                                 </div>
                             </div>
-                            <button className="secondary-button" style={{ 
-                                padding: '6px 12px',
-                                fontSize: '0.8rem'
-                            }}>
+                            <button 
+                                className="secondary-button" 
+                                style={{ 
+                                    padding: '6px 12px',
+                                    fontSize: '0.8rem'
+                                }}
+                                onClick={() => handleRequestUpgrade()}
+                            >
                                 📞 依頼する
                             </button>
                         </li>
@@ -230,31 +238,37 @@ const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats }) => {
 };
 
 const UsageStatus = ({ storeId }) => {
+    const navigate = useNavigate();
     const [status, setStatus] = useState(null);
     const [showLineDetails, setShowLineDetails] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // fetchStatusを先に定義
+    const fetchStatus = async () => {
+        if (!storeId) return;
+        
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await api.get(`/api/usage/status?store_id=${storeId}`);
+            setStatus(response.data);
+            
+            // LINE制限が警告レベル以上の場合は詳細を自動表示
+            if (response.data.lineOfficialStatus?.alertLevel !== 'normal') {
+                setShowLineDetails(true);
+            }
+            
+        } catch (error) { 
+            console.error("プラン・利用状況の取得に失敗しました:", error);
+            setError('使用状況の取得に失敗しました。再読み込みしてください。');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStatus = async () => {
-            if (!storeId) return;
-            
-            setLoading(true);
-            try {
-                const response = await api.get(`/api/usage/status?store_id=${storeId}`);
-                setStatus(response.data);
-                
-                // LINE制限が警告レベル以上の場合は詳細を自動表示
-                if (response.data.lineOfficialStatus?.alertLevel !== 'normal') {
-                    setShowLineDetails(true);
-                }
-                
-            } catch (error) { 
-                console.error("プラン・利用状況の取得に失敗しました:", error); 
-            } finally {
-                setLoading(false);
-            }
-        };
-        
         fetchStatus();
         
         // 定期的に更新（5分ごと）
@@ -279,6 +293,69 @@ const UsageStatus = ({ storeId }) => {
         );
     }
 
+    // ボタンハンドラー
+    const handleAlertButtonClick = (alertLevel) => {
+        switch (alertLevel) {
+            case 'critical':
+                // 解決方法を見る
+                navigate('/help/line-limit-reached');
+                break;
+            case 'warning':
+                // 今すぐ確認
+                setShowLineDetails(true);
+                break;
+            case 'attention':
+                // 詳細
+                setShowLineDetails(true);
+                break;
+            default:
+                break;
+        }
+    };
+
+    const handleRequestUpgrade = () => {
+        setShowUpgradeModal(true);
+        // TODO: アップグレードモーダルの実装
+        console.log('LINE公式プランアップグレード依頼');
+    };
+
+    // エラー表示
+    if (error) {
+        return (
+            <div className="card usage-status-container">
+                <div className="card-header">
+                    <div className="summary-icon">⚡</div>
+                    <h2>使用状況</h2>
+                </div>
+                <div style={{ 
+                    padding: '32px', 
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(185, 58, 58, 0.08)',
+                    borderRadius: '8px',
+                    margin: '16px'
+                }}>
+                    <div style={{ 
+                        fontSize: '1.5rem',
+                        marginBottom: '16px'
+                    }}>⚠️</div>
+                    <p style={{ 
+                        color: 'var(--color-text)',
+                        marginBottom: '16px'
+                    }}>{error}</p>
+                    <button 
+                        className="action-button"
+                        onClick={() => {
+                            setError(null);
+                            fetchStatus();
+                        }}
+                    >
+                        再試行
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (!status) return null;
 
     return (
@@ -292,6 +369,7 @@ const UsageStatus = ({ storeId }) => {
             <LineUsageAlert 
                 lineStatus={status.lineOfficialStatus}
                 friendsCount={status.friendsCount}
+                onButtonClick={handleAlertButtonClick}
             />
             
             <div style={{ marginBottom: '24px' }}>

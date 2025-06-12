@@ -50,6 +50,74 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 店舗情報更新API
+router.put('/:storeId', async (req, res) => {
+  const { storeId } = req.params;
+  const { name, phone, address, concept, operating_hours } = req.body;
+  
+  // 更新するフィールドを動的に構築
+  const updateFields = [];
+  const values = [];
+  let paramCount = 1;
+  
+  if (name !== undefined) {
+    updateFields.push(`name = $${paramCount}`);
+    values.push(name);
+    paramCount++;
+  }
+  if (phone !== undefined) {
+    updateFields.push(`phone = $${paramCount}`);
+    values.push(phone);
+    paramCount++;
+  }
+  if (address !== undefined) {
+    updateFields.push(`address = $${paramCount}`);
+    values.push(address);
+    paramCount++;
+  }
+  if (concept !== undefined) {
+    updateFields.push(`concept = $${paramCount}`);
+    values.push(concept);
+    paramCount++;
+  }
+  if (operating_hours !== undefined) {
+    updateFields.push(`operating_hours = $${paramCount}`);
+    values.push(operating_hours);
+    paramCount++;
+  }
+  
+  if (updateFields.length === 0) {
+    return res.status(400).json({ error: '更新するフィールドが指定されていません。' });
+  }
+  
+  values.push(storeId);
+  
+  try {
+    const client = await pool.connect();
+    try {
+      const query = `
+        UPDATE stores 
+        SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $${paramCount}
+        RETURNING id, name, phone, address, concept, operating_hours;
+      `;
+      const result = await client.query(query, values);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: '店舗が見つかりません。' });
+      }
+      
+      console.log(`✅ 店舗情報を更新しました: ${result.rows[0].name}`);
+      res.status(200).json({ success: true, store: result.rows[0] });
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('❌ 店舗情報更新中にエラーが発生しました:', err.stack);
+    res.status(500).json({ error: 'サーバー内部でエラーが発生しました。' });
+  }
+});
+
 
 // --- メニュー関連API ---
 router.post('/:storeId/menus', async (req, res) => {

@@ -16,6 +16,7 @@ import usageRoutes from './routes/usageRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import supportRoutes from './routes/supportRoutes.js';
 import { testDbConnection } from './config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +56,7 @@ const startServer = async () => {
   app.use('/api/menus', menuRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/upload', uploadRoutes);
+  app.use('/api/support', supportRoutes);
 
   // ルートエンドポイント
   app.get('/', (req, res) => { 
