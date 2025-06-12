@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
 
-const MenuList = ({ storeId }) => {
+const MenuList = ({ storeId, initialAction }) => {
     const [menus, setMenus] = useState([]);
     const [editingMenuId, setEditingMenuId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
@@ -26,6 +26,12 @@ const MenuList = ({ storeId }) => {
         };
         fetchMenus();
     }, [storeId]);
+
+    useEffect(() => {
+        if (initialAction === 'add') {
+            setShowAddForm(true);
+        }
+    }, [initialAction]);
 
     const handleEditClick = (menu) => {
         setEditingMenuId(menu.id);

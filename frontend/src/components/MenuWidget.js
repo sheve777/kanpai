@@ -1,8 +1,10 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\MenuWidget.js
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const MenuWidget = ({ storeId }) => {
+    const navigate = useNavigate();
     const [menuStats, setMenuStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -53,9 +55,8 @@ const MenuWidget = ({ storeId }) => {
     };
 
     const handleActionClick = (action) => {
-        // TODO: React Router実装後にルーティング対応
         console.log(`メニュー管理へ遷移: ${action}`);
-        // navigate(`/menu-management?action=${action}`);
+        navigate(`/menu-management?action=${action}`);
     };
 
     const getUsageColor = () => {
