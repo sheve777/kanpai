@@ -58,6 +58,7 @@ main {
         gap: 20px;
     }
     .summary-container { grid-column: 1 / -1; }
+    .notice-board-container { grid-column: 1 / -1; }
     .reservation-list-container { grid-column: 1 / 4; }
     .usage-status-container { grid-column: 4 / -1; }
     .line-broadcast-container { grid-column: 1 / 4; }
@@ -74,6 +75,7 @@ main {
         gap: 25px;
     }
     .summary-container { grid-column: 1 / -1; }
+    .notice-board-container { grid-column: 1 / -1; }
     .reservation-list-container { grid-column: 1 / 8; }
     .usage-status-container { grid-column: 8 / -1; }
     .line-broadcast-container { grid-column: 1 / 7; }
