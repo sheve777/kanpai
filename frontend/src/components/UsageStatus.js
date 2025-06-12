@@ -120,7 +120,7 @@ const LineUsageAlert = ({ lineStatus, friendsCount, onButtonClick }) => {
     );
 };
 
-const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats }) => {
+const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats, onRequestUpgrade }) => {
     if (!lineStatus) return null;
 
     return (
@@ -208,7 +208,7 @@ const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats }) => {
                                     padding: '6px 12px',
                                     fontSize: '0.8rem'
                                 }}
-                                onClick={() => handleRequestUpgrade()}
+                                onClick={() => onRequestUpgrade()}
                             >
                                 📞 依頼する
                             </button>
@@ -427,6 +427,7 @@ const UsageStatus = ({ storeId }) => {
                             lineStatus={status.lineOfficialStatus}
                             friendsCount={status.friendsCount}
                             monthlyStats={status.monthlyStats}
+                            onRequestUpgrade={handleRequestUpgrade}
                         />
                     )}
                 </div>
