@@ -1,6 +1,6 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\NoticeBoard.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/axiosConfig.js';
 
 const NoticeBoard = ({ storeId }) => {
     const [notices, setNotices] = useState([]);
@@ -15,8 +15,8 @@ const NoticeBoard = ({ storeId }) => {
             
             // 複数のデータソースから通知情報を取得
             const [usageResponse, dashboardResponse] = await Promise.allSettled([
-                axios.get(`/api/usage/status?store_id=${storeId}`),
-                axios.get(`/api/dashboard/summary?store_id=${storeId}`)
+                api.get(`/api/usage/status?store_id=${storeId}`),
+                api.get(`/api/dashboard/summary?store_id=${storeId}`)
             ]);
 
             const dynamicNotices = [];

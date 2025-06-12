@@ -1,6 +1,6 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\BasicInfo.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/axiosConfig.js';
 
 const InfoRow = ({ icon, label, value, field, onSave, editable = true }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -159,17 +159,46 @@ const BasicInfo = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 仮のstoreId - 実際の実装では適切に取得する必要があります
-    const storeId = 1;
+    // 認証されたstoreIdを取得
+    const storeId = localStorage.getItem('kanpai_store_id');
 
     useEffect(() => {
         fetchStoreInfo();
     }, []);
 
+    const formatOperatingHours = (hoursObj) => {
+        if (typeof hoursObj === 'string') {
+            return hoursObj; // 既に文字列の場合はそのまま返す
+        }
+        
+        if (typeof hoursObj === 'object' && hoursObj !== null) {
+            // オブジェクトの場合は文字列に変換
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+            
+            const formatted = days.map((day, index) => {
+                if (hoursObj[day]) {
+                    return `${dayNames[index]} ${hoursObj[day].open}-${hoursObj[day].close}`;
+                }
+                return null;
+            }).filter(Boolean).join(' / ');
+            
+            return formatted || 'ランチ 11:30-14:30 / ディナー 17:30-23:00 (L.O. 22:30)';
+        }
+        
+        return 'ランチ 11:30-14:30 / ディナー 17:30-23:00 (L.O. 22:30)'; // デフォルト値
+    };
+
     const fetchStoreInfo = async () => {
+        if (!storeId) {
+            console.warn('⚠️ storeIdが設定されていません');
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
-            const response = await axios.get(`/api/stores/${storeId}/info`);
+            const response = await api.get(`/api/stores/${storeId}/info`);
             if (response.data) {
                 setStoreInfo({
                     name: response.data.name || storeInfo.name,
@@ -177,7 +206,7 @@ const BasicInfo = () => {
                     address: response.data.address || storeInfo.address,
                     paymentMethods: storeInfo.paymentMethods, // APIから取得できない場合はデフォルト値
                     concept: response.data.concept || storeInfo.concept,
-                    operatingHours: response.data.operating_hours || storeInfo.operatingHours
+                    operatingHours: formatOperatingHours(response.data.operating_hours) || storeInfo.operatingHours
                 });
             }
         } catch (error) {
@@ -204,7 +233,7 @@ const BasicInfo = () => {
                 updateData[fieldMapping[field]] = value;
             }
             
-            const response = await axios.put(`/api/stores/${storeId}`, updateData);
+            const response = await api.put(`/api/stores/${storeId}`, updateData);
             
             if (response.data.success) {
                 setStoreInfo(prev => ({ ...prev, [field]: value }));

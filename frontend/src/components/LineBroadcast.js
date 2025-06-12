@@ -205,7 +205,7 @@ const LineBroadcast = ({ storeId }) => {
                 <div className="summary-icon">📢</div>
                 <div style={{ flex: 1 }}>
                     <h2 style={{ margin: 0 }}>LINE一斉配信</h2>
-                    {lineUsageStatus && (
+                    {lineUsageStatus && lineUsageStatus.friendsCount && (
                         <div className="friends-count">
                             友だち数: {lineUsageStatus.friendsCount.toLocaleString()}名
                         </div>

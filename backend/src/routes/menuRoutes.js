@@ -1,6 +1,7 @@
 ﻿// C:\Users\acmsh\kanpAI\backend\src\routes\menuRoutes.js
 import express from 'express';
 import pool from '../config/db.js';
+import { authenticateToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 

@@ -24,9 +24,20 @@ const ReportList = ({ storeId, onSelectReport }) => {
         const response = await api.get(`/api/reports?store_id=${storeId}`);
         
         console.log('✅ レポート一覧取得成功:', response.data);
-        setReports(response.data);
         
-        if (response.data.length === 0) {
+        // APIレスポンスの形式を確認してデータを正しく設定
+        let reportData = response.data;
+        if (reportData && reportData.reports) {
+          // デモAPIの形式: { success: true, reports: [...] }
+          reportData = reportData.reports;
+        } else if (!Array.isArray(reportData)) {
+          // データが配列でない場合は空配列に設定
+          reportData = [];
+        }
+        
+        setReports(reportData);
+        
+        if (reportData.length === 0) {
           console.log('ℹ️ レポートがありません。サンプルレポートを生成してみます...');
           // サンプルレポートを生成
           await generateSampleReport();
@@ -60,7 +71,16 @@ const ReportList = ({ storeId, onSelectReport }) => {
       
       // レポート一覧を再取得
       const listResponse = await api.get(`/api/reports?store_id=${storeId}`);
-      setReports(listResponse.data);
+      
+      // APIレスポンスの形式を確認してデータを正しく設定
+      let reportData = listResponse.data;
+      if (reportData && reportData.reports) {
+        reportData = reportData.reports;
+      } else if (!Array.isArray(reportData)) {
+        reportData = [];
+      }
+      
+      setReports(reportData);
       
     } catch (error) {
       console.error('❌ サンプルレポート生成に失敗:', error);

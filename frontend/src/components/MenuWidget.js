@@ -1,7 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\MenuWidget.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/axiosConfig.js';
 
 const MenuWidget = ({ storeId }) => {
     const navigate = useNavigate();
@@ -19,8 +19,8 @@ const MenuWidget = ({ storeId }) => {
             setLoading(true);
             // メニュー統計と使用量を取得
             const [menuResponse, usageResponse] = await Promise.allSettled([
-                axios.get(`/api/stores/${storeId}/menus`),
-                axios.get(`/api/usage/status?store_id=${storeId}`)
+                api.get(`/api/stores/${storeId}/menus`),
+                api.get(`/api/usage/status?store_id=${storeId}`)
             ]);
 
             let stats = {

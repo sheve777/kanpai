@@ -1,6 +1,6 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\BroadcastHistory.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/axiosConfig.js';
 
 const BroadcastHistory = ({ storeId }) => {
     const [history, setHistory] = useState([]);
@@ -8,7 +8,7 @@ const BroadcastHistory = ({ storeId }) => {
         const fetchHistory = async () => {
             if (!storeId) return;
             try {
-                const response = await axios.get(`http://localhost:3001/api/line/history?store_id=${storeId}`);
+                const response = await api.get(`/api/line/history?store_id=${storeId}`);
                 setHistory(response.data);
             } catch (error) { console.error("配信履歴の取得に失敗しました:", error); }
         };

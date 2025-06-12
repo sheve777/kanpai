@@ -17,6 +17,8 @@ import menuRoutes from './routes/menuRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import supportRoutes from './routes/supportRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import demoRoutes from './routes/demoRoutes.js';
 import { testDbConnection } from './config/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +27,8 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const startServer = async () => {
-  await testDbConnection();
+  // 一時的にDB接続チェックをスキップ（デモ用）
+  // await testDbConnection();
   const app = express();
   const port = process.env.PORT || 3001;
   
@@ -46,7 +49,17 @@ const startServer = async () => {
   // 2. 次に、一般的なJSONリクエストを受け取るための門番(パーサー)を配置します。
   app.use(express.json());
 
-  // 3. 最後に、JSONを扱う残りのすべてのAPIルートを定義します。
+  // 3. 認証ルート（認証不要）
+  console.log('🔐 認証ルートを登録中...');
+  app.use('/api/auth', authRoutes);
+  console.log('✅ 認証ルート登録完了: /api/auth');
+
+  // 3.5. デモルート（DB接続なしのモックデータ）
+  console.log('📝 デモルートを登録中...');
+  app.use('/api', demoRoutes);
+  console.log('✅ デモルート登録完了: /api/*');
+
+  // 4. 最後に、JSONを扱う残りのすべてのAPIルートを定義します。
   app.use('/api/stores', storeRoutes);
   app.use('/api/reservations', reservationRoutes);
   app.use('/api/line', lineRoutes);

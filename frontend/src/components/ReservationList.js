@@ -37,10 +37,22 @@ const ReservationList = ({ storeId }) => {
         try {
             setLoading(true);
             const response = await api.get(`/api/reservations?store_id=${storeId}&period=${selectedDate}`);
-            setReservations(response.data);
-            console.log(`✅ 予約一覧取得: ${response.data.length}件`);
+            
+            // APIレスポンスの形式を確認してデータを正しく設定
+            let reservationData = response.data;
+            if (reservationData && reservationData.reservations) {
+                // デモAPIの形式: { success: true, reservations: [...] }
+                reservationData = reservationData.reservations;
+            } else if (!Array.isArray(reservationData)) {
+                // データが配列でない場合は空配列に設定
+                reservationData = [];
+            }
+            
+            setReservations(reservationData);
+            console.log(`✅ 予約一覧取得: ${reservationData.length}件`);
         } catch (error) {
             console.error('❌ 予約取得エラー:', error);
+            setReservations([]); // エラー時は空配列
         } finally {
             setLoading(false);
         }
@@ -126,6 +138,8 @@ const ReservationList = ({ storeId }) => {
     };
 
     const getReservationForTimeSlot = (timeSlot) => {
+        if (!Array.isArray(reservations)) return [];
+        
         return reservations.filter(reservation => {
             const resTime = reservation.reservation_time.substring(0, 5);
             const endTime = reservation.end_time;
@@ -230,7 +244,7 @@ const ReservationList = ({ storeId }) => {
                             fontWeight: '600',
                             color: 'var(--color-text)'
                         }}>
-                            📊 {getDateLabel(selectedDate)}: {reservations.length}組 {reservations.reduce((total, res) => total + res.party_size, 0)}名
+                            📊 {getDateLabel(selectedDate)}: {reservations.length}組 {Array.isArray(reservations) ? reservations.reduce((total, res) => total + res.party_size, 0) : 0}名
                         </div>
                     </div>
 
@@ -362,7 +376,7 @@ const ReservationList = ({ storeId }) => {
                             <div className="info-icon">👥</div>
                             <div className="info-title">総人数</div>
                             <div className="stat-number">
-                                {reservations.reduce((total, res) => total + res.party_size, 0)}
+                                {Array.isArray(reservations) ? reservations.reduce((total, res) => total + res.party_size, 0) : 0}
                             </div>
                         </div>
                         <div className="info-card">
