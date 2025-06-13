@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import StoreWizard from './StoreWizard';
 import {
   Search,
   Filter,
@@ -24,7 +25,7 @@ const StoreManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [showNewStoreModal, setShowNewStoreModal] = useState(false);
+  const [showStoreWizard, setShowStoreWizard] = useState(false);
 
   useEffect(() => {
     fetchStores();
@@ -123,7 +124,7 @@ const StoreManagement = () => {
         <h1>店舗管理</h1>
         <button 
           className="btn-primary"
-          onClick={() => setShowNewStoreModal(true)}
+          onClick={() => setShowStoreWizard(true)}
         >
           <Plus size={18} />
           新店舗追加
@@ -249,16 +250,14 @@ const StoreManagement = () => {
         </div>
       )}
 
-      {/* New Store Modal - Placeholder */}
-      {showNewStoreModal && (
-        <div className="modal-overlay" onClick={() => setShowNewStoreModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>新店舗追加</h2>
-            <p>新店舗追加ウィザードは今後実装予定です。</p>
-            <button onClick={() => setShowNewStoreModal(false)}>閉じる</button>
-          </div>
-        </div>
-      )}
+      {/* Store Wizard */}
+      <StoreWizard
+        isOpen={showStoreWizard}
+        onClose={() => {
+          setShowStoreWizard(false);
+          fetchStores(); // 店舗一覧を再取得
+        }}
+      />
     </div>
   );
 };
