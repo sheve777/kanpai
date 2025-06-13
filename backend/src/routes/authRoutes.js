@@ -3,6 +3,9 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import pool from '../config/db.js';
+import { validateLogin, validateChangePassword } from '../middlewares/validation.js';
+import { catchAsync, AuthenticationError, ValidationError } from '../middlewares/errorHandler.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -20,7 +23,7 @@ const DEMO_MODE = process.env.DEMO_MODE === 'true';
 const DEMO_PASSWORDS = process.env.DEMO_PASSWORDS ? process.env.DEMO_PASSWORDS.split(',') : []; // 7日間有効
 
 // ログインエンドポイント
-router.post('/login', async (req, res) => {
+router.post('/login', validateLogin, catchAsync(async (req, res) => {
     const { storeId, password } = req.body;
     
     try {
@@ -138,13 +141,10 @@ router.post('/login', async (req, res) => {
             });
 
     } catch (error) {
-        console.error('❌ ログインエラー:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'サーバーエラーが発生しました' 
-        });
+        logger.error('ログインエラー:', { error: error.message, storeId });
+        throw error;
     }
-});
+}));
 
 // トークン検証エンドポイント
 router.post('/verify', async (req, res) => {

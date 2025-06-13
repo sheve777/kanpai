@@ -3,6 +3,9 @@ import express from 'express';
 import pool from '../config/db.js';
 import { createCalendarEvent, deleteCalendarEvent, checkCalendarAvailability } from '../services/googleCalendarService.js';
 import { sendNewReservationNotification, sendCancelReservationNotification } from '../services/notificationService.js';
+import { validateReservation, validateStoreId, validatePagination } from '../middlewares/validation.js';
+import { catchAsync, NotFoundError, ValidationError } from '../middlewares/errorHandler.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -19,7 +22,7 @@ const getStoreSettings = async (storeId) => {
         `;
         const result = await client.query(query, [storeId]);
         if (result.rows.length === 0) {
-            throw new Error('店舗が見つかりません');
+            throw new NotFoundError('店舗が見つかりません');
         }
         return result.rows[0];
     } finally {

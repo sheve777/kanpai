@@ -20,7 +20,9 @@
     "db:update-chat-messages": "node src/db/update-chat-messages-table.js",
     "db:update-line": "node src/db/update-line-tables.js",
     "db:check-reservations": "node src/db/check-reservations-debug.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "line",
@@ -36,11 +38,34 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
     "googleapis": "^142.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "openai": "^4.47.3",
     "pg": "^8.12.0",
-    "stripe": "^15.8.0"
+    "stripe": "^15.8.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.27.2",
+    "jest": "^30.0.0",
+    "supertest": "^7.1.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js",
+      "!src/config/db.js"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ]
   }
 }

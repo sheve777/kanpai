@@ -20,6 +20,8 @@ import supportRoutes from './routes/supportRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import demoRoutes from './routes/demoRoutes.js';
 import { testDbConnection } from './config/db.js';
+import logger from './utils/logger.js';
+import globalErrorHandler, { notFound } from './middlewares/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +36,9 @@ const startServer = async () => {
   
   // CORS設定
   app.use(cors());
+  
+  // レート制限を追加
+  app.use(generalLimiter);
   
   // 静的ファイル配信設定（修正版）
   const publicPath = path.join(__dirname, '..', 'public');
@@ -51,12 +56,12 @@ const startServer = async () => {
 
   // 3. 認証ルート（認証不要）
   console.log('🔐 認証ルートを登録中...');
-  app.use('/api/auth', authRoutes);
+  app.use('/api/auth', authLimiter, authRoutes); // 認証に厳しいレート制限を適用
   console.log('✅ 認証ルート登録完了: /api/auth');
 
   // 3.5. デモルート（DB接続なしのモックデータ）
   console.log('📝 デモルートを登録中...');
-  app.use('/api', demoRoutes);
+  app.use('/api', apiLimiter, demoRoutes); // APIエンドポイントにレート制限を適用
   console.log('✅ デモルート登録完了: /api/*');
 
   // 4. 最後に、JSONを扱う残りのすべてのAPIルートを定義します。
@@ -83,20 +88,35 @@ const startServer = async () => {
     `); 
   });
 
-  // 404ハンドラー（デバッグ用）
-  app.use((req, res) => {
-    console.log(`❌ 404 Not Found: ${req.method} ${req.url}`);
-    res.status(404).json({ 
-      error: 'ページが見つかりません',
-      url: req.url,
-      method: req.method,
-      static_path: publicPath
+  // グローバルエラーハンドラーを追加
+  app.use(notFound); // 404ハンドラー
+  app.use(globalErrorHandler); // グローバルエラーハンドラー
+
+  // 未キャッチ例外の処理
+  process.on('uncaughtException', (err) => {
+    logger.error('UNCAUGHT EXCEPTION! 💥 Shutting down...', err);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (err) => {
+    logger.error('UNHANDLED REJECTION! 💥 Shutting down...', err);
+    process.exit(1);
+  });
+
+  // サーバー開始
+  const server = app.listen(port, () => { 
+    logger.info(`サーバーがポート${port}で起動しました。 http://localhost:${port}`);
+    logger.info(`📁 静的ファイルを配信中: ${publicPath}`);
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received. Shutting down gracefully...');
+    server.close(() => {
+      logger.info('Process terminated!');
     });
   });
 
-  app.listen(port, () => { 
-    console.log(`サーバーがポート${port}で起動しました。 http://localhost:${port}`);
-    console.log(`📁 静的ファイルを配信中: ${publicPath}`);
-  });
+  return server;
 };
 startServer();
