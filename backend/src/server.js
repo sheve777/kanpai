@@ -19,9 +19,11 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import supportRoutes from './routes/supportRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import demoRoutes from './routes/demoRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { testDbConnection } from './config/db.js';
 import logger from './utils/logger.js';
 import globalErrorHandler, { notFound } from './middlewares/errorHandler.js';
+import { generalLimiter, authLimiter, apiLimiter } from './middlewares/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,7 +34,7 @@ const startServer = async () => {
   // 一時的にDB接続チェックをスキップ（デモ用）
   // await testDbConnection();
   const app = express();
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3002;
   
   // CORS設定
   app.use(cors());
@@ -58,6 +60,11 @@ const startServer = async () => {
   console.log('🔐 認証ルートを登録中...');
   app.use('/api/auth', authLimiter, authRoutes); // 認証に厳しいレート制限を適用
   console.log('✅ 認証ルート登録完了: /api/auth');
+
+  // 3.1. 管理者ルート（管理者専用）
+  console.log('👑 管理者ルートを登録中...');
+  app.use('/api/admin', authLimiter, adminRoutes); // 管理者に厳しいレート制限を適用
+  console.log('✅ 管理者ルート登録完了: /api/admin');
 
   // 3.5. デモルート（DB接続なしのモックデータ）
   console.log('📝 デモルートを登録中...');
