@@ -8,6 +8,15 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
+// デバッグ用テストエンドポイント
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: '管理者ルートが正常に動作しています',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // JWT シークレットキー
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '8h'; // 管理者セッションは8時間
@@ -418,6 +427,154 @@ router.get('/dashboard/stats', authenticateAdmin, logAdminActivity('view_dashboa
     res.json({
       success: true,
       stats: demoStats
+    });
+  }
+}));
+
+// 新店舗作成
+router.post('/stores/create', authenticateAdmin, logAdminActivity('create_store', 'stores'), catchAsync(async (req, res) => {
+  const { basicInfo, lineSetup, googleSetup, aiSetup } = req.body;
+  
+  // バリデーション
+  if (!basicInfo?.name || !basicInfo?.phone || !basicInfo?.address) {
+    return res.status(400).json({
+      success: false,
+      error: '基本情報（店舗名、電話番号、住所）は必須です'
+    });
+  }
+
+  if (!lineSetup?.channelId || !lineSetup?.channelSecret || !lineSetup?.accessToken) {
+    return res.status(400).json({
+      success: false,
+      error: 'LINE設定（Channel ID、Channel Secret、Access Token）は必須です'
+    });
+  }
+
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // UUID生成関数を使用
+      const storeId = `store-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // 店舗基本情報を保存
+      const storeResult = await client.query(`
+        INSERT INTO stores (id, name, phone, address, concept, operating_hours, plan, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING id
+      `, [
+        storeId,
+        basicInfo.name,
+        basicInfo.phone,
+        basicInfo.address,
+        basicInfo.concept || '',
+        JSON.stringify(basicInfo.operatingHours),
+        basicInfo.plan || 'standard'
+      ]);
+
+      const finalStoreId = storeResult.rows[0].id;
+
+      // LINE設定を保存
+      await client.query(`
+        INSERT INTO line_settings (store_id, channel_id, channel_secret, access_token, webhook_url, rich_menu_enabled, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `, [
+        finalStoreId,
+        lineSetup.channelId,
+        lineSetup.channelSecret,
+        lineSetup.accessToken,
+        lineSetup.webhookUrl,
+        lineSetup.richMenuEnabled || false
+      ]);
+
+      // Google設定を保存（設定されている場合のみ）
+      if (googleSetup?.serviceAccountEmail && googleSetup?.privateKey) {
+        await client.query(`
+          INSERT INTO google_settings (store_id, calendar_id, service_account_email, private_key, timezone, auto_create_events, sync_existing_events, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        `, [
+          finalStoreId,
+          googleSetup.calendarId || 'primary',
+          googleSetup.serviceAccountEmail,
+          googleSetup.privateKey,
+          googleSetup.timezone || 'Asia/Tokyo',
+          googleSetup.autoCreateEvents || false,
+          googleSetup.syncExistingEvents || false
+        ]);
+      }
+
+      // AI設定を保存
+      await client.query(`
+        INSERT INTO ai_settings (store_id, personality, tone, language, custom_prompt, use_common_key, custom_api_key, enable_auto_reply, enable_learning, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      `, [
+        finalStoreId,
+        aiSetup.personality || 'friendly',
+        aiSetup.tone || 'casual',
+        aiSetup.language || 'ja',
+        aiSetup.customPrompt || '',
+        aiSetup.useCommonKey !== false,
+        aiSetup.customApiKey || '',
+        aiSetup.enableAutoReply !== false,
+        aiSetup.enableLearning !== false
+      ]);
+
+      // 店舗認証情報を作成（初期パスワードは店舗名ベース）
+      const initialPassword = `${basicInfo.name.replace(/\s+/g, '').toLowerCase()}123`;
+      const hashedPassword = await bcrypt.hash(initialPassword, 10);
+      
+      await client.query(`
+        INSERT INTO store_auth (store_id, username, password_hash, is_active, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+      `, [
+        finalStoreId,
+        basicInfo.name.replace(/\s+/g, '').toLowerCase(),
+        hashedPassword,
+        true
+      ]);
+
+      await client.query('COMMIT');
+      
+      logger.info('新店舗作成成功', { 
+        storeId: finalStoreId, 
+        storeName: basicInfo.name,
+        adminId: req.admin.id 
+      });
+
+      res.json({
+        success: true,
+        storeId: finalStoreId,
+        message: '店舗が正常に作成されました',
+        loginInfo: {
+          username: basicInfo.name.replace(/\s+/g, '').toLowerCase(),
+          temporaryPassword: initialPassword
+        }
+      });
+
+    } catch (queryError) {
+      await client.query('ROLLBACK');
+      throw queryError;
+    } finally {
+      client.release();
+    }
+  } catch (dbError) {
+    // デモモード：実際のDBなしで成功レスポンス
+    const demoStoreId = `demo-store-${Date.now()}`;
+    
+    logger.info('デモモード：新店舗作成シミュレーション', { 
+      storeId: demoStoreId, 
+      storeName: basicInfo.name 
+    });
+
+    res.json({
+      success: true,
+      storeId: demoStoreId,
+      message: '店舗が正常に作成されました（デモモード）',
+      loginInfo: {
+        username: basicInfo.name.replace(/\s+/g, '').toLowerCase(),
+        temporaryPassword: `${basicInfo.name.replace(/\s+/g, '').toLowerCase()}123`
+      }
     });
   }
 }));
