@@ -20,6 +20,7 @@ import supportRoutes from './routes/supportRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import demoRoutes from './routes/demoRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import healthRoutes from './routes/healthRoutes.js';
 import { testDbConnection } from './config/db.js';
 import logger from './utils/logger.js';
 import globalErrorHandler, { notFound } from './middlewares/errorHandler.js';
@@ -31,13 +32,25 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const startServer = async () => {
-  // 一時的にDB接続チェックをスキップ（デモ用）
-  // await testDbConnection();
+  // データベース接続テスト（本番運用では必須）
+  if (process.env.NODE_ENV === 'production' || process.env.FORCE_DB_CHECK === 'true') {
+    await testDbConnection();
+  } else {
+    logger.warn('⚠️ DB接続チェックをスキップしています（開発環境）');
+  }
   const app = express();
   const port = process.env.PORT || 3002;
   
-  // CORS設定
-  app.use(cors());
+  // CORS設定（本番環境対応）
+  const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+      ? process.env.CORS_ORIGIN || process.env.FRONTEND_URL
+      : true, // 開発環境では全オリジンを許可
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  };
+  app.use(cors(corsOptions));
   
   // レート制限を追加
   app.use(generalLimiter);
@@ -82,6 +95,9 @@ const startServer = async () => {
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/upload', uploadRoutes);
   app.use('/api/support', supportRoutes);
+  
+  // ヘルスチェックエンドポイント（認証不要）
+  app.use('/api/health', healthRoutes);
 
   // ルートエンドポイント
   app.get('/', (req, res) => { 

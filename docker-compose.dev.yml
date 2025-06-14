@@ -1,0 +1,97 @@
+# Development Docker Compose for kanpAI
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Development)
+  database:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanpai_dev
+      POSTGRES_USER: kanpai_user
+      POSTGRES_PASSWORD: dev_password_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backend/backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanpai_user -d kanpai_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - kanpai_dev_network
+
+  # Redis for Development
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - kanpai_dev_network
+
+  # Backend API (Development with hot reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://kanpai_user:dev_password_123@database:5432/kanpai_dev
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev_jwt_secret_not_for_production
+      DEMO_MODE: "true"
+      LOG_LEVEL: debug
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - kanpai_dev_network
+
+  # Frontend (Development with hot reload)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:3002
+      REACT_APP_ENVIRONMENT: development
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+    networks:
+      - kanpai_dev_network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  kanpai_dev_network:
+    driver: bridge

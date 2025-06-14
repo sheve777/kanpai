@@ -1,0 +1,22 @@
+# Development Dockerfile for kanpAI Backend
+FROM node:18-alpine
+
+# Install development dependencies including PostgreSQL client
+RUN apk add --no-cache postgresql-client
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm install
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/uploads /app/backups
+
+# Copy source code (will be overridden by volume in dev)
+COPY . .
+
+EXPOSE 3002
+
+# Development command with nodemon for hot reload
+CMD ["npm", "run", "dev"]

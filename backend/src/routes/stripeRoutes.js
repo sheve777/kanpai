@@ -46,13 +46,16 @@ router.post('/create-checkout-session', express.json(), async (req, res) => {
         return res.status(400).json({ error: '価格IDと店舗IDは必須です。' });
     }
     
+    // 本番環境対応：フロントエンドURLを環境変数から取得
+    const frontendUrl = process.env.FRONTEND_URL || process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000';
+    
     const checkoutOptions = {
         payment_method_types: ['card'],
         line_items: [{ price: priceId, quantity: 1 }],
         mode: mode,
         client_reference_id: storeId,
-        success_url: `http://localhost:3000/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `http://localhost:3000/payment-canceled`,
+        success_url: `${frontendUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${frontendUrl}/payment-canceled`,
     };
     
     if (mode === 'subscription' && planCode) {
