@@ -324,4 +324,127 @@ router.get('/reports/:reportId', (req, res) => {
   });
 });
 
+// レポート生成のデモレスポンス
+router.post('/reports/generate', (req, res) => {
+  const { store_id, report_month, plan_type } = req.body;
+  
+  console.log(`📝 デモモード: レポート生成 (店舗=${store_id}, 月=${report_month}, プラン=${plan_type})`);
+  
+  // デモ用のAI生成風レポート
+  const demoReportContent = generateDemoReport(store_id, report_month, plan_type);
+  
+  const newReport = {
+    id: Date.now(), // 簡易ID生成
+    store_id,
+    report_month,
+    plan_type,
+    report_content: demoReportContent,
+    status: 'completed',
+    generated_at: new Date().toISOString(),
+    created_at: new Date().toISOString()
+  };
+  
+  res.status(201).json({
+    success: true,
+    message: 'デモレポートを生成しました',
+    report: newReport
+  });
+});
+
+// デモ用レポート生成関数
+const generateDemoReport = (storeId, reportMonth, planType) => {
+  const storeName = `デモ店舗 ${storeId}`;
+  const year = reportMonth.substring(0, 4);
+  const month = reportMonth.substring(5, 7);
+  
+  switch (planType) {
+    case 'entry':
+      return `# ${storeName} ${year}年${month}月 基本レポート
+
+## 📊 今月の基本数値
+
+📞 **チャット対応件数**: 45件
+📅 **予約件数**: 23件  
+📨 **LINE配信回数**: 3回
+
+## 💡 もっと詳しく知りたくありませんか？
+
+**スタンダードプランなら、さらに詳しい分析をご覧いただけます！**
+
+プラン変更のご相談はサポートまで 📞`;
+
+    case 'standard':
+      return `# ${storeName} ${year}年${month}月 月次分析レポート
+
+## 🎯 今月のハイライト
+
+✅ **チャット対応**: 45件（前月比+15%↗️）
+✅ **予約獲得**: 23件（前月比+8%↗️）
+✅ **LINE配信**: 3回（安定運用中）
+
+## 📈 詳細分析
+
+### よく聞かれた質問TOP5
+1位: 営業時間について (12件)
+2位: メニューについて (8件)
+3位: アクセス方法について (6件)
+4位: 予約方法について (5件)
+5位: 支払い方法について (4件)
+
+### 💡 改善提案
+1. アクセス情報の充実化
+2. メニュー説明の強化
+3. 混雑時間帯の分散施策
+
+今月もお疲れ様でした！`;
+
+    case 'pro':
+      return `# ${storeName} ${year}年${month}月 戦略分析レポート
+
+## 🏆 エグゼクティブサマリー
+
+当月は顧客エンゲージメント向上により、予約獲得率が8%向上しました。特にチャットボット経由での問い合わせ増加が目立ちます。
+
+## 📊 詳細KPI分析
+
+### 重要指標
+- **チャット対応率**: 98.2%（業界平均85%を上回る）
+- **予約転換率**: 51.1%（前月比+3.2%）
+- **顧客満足度**: 4.3/5.0（推定）
+
+### 競合ベンチマーク
+同エリア居酒屋平均と比較して：
+- チャット対応数: +28%
+- 予約獲得数: +31%
+- LINE活用度: +45%
+
+## 🎯 戦略的改善提案
+
+### 短期施策（1ヶ月以内）
+1. **アクセス情報の最適化**
+   - 効果予測: 問い合わせ15%削減
+   - ROI: 約120%
+
+### 中期施策（3ヶ月以内）
+1. **メニュー訴求強化**
+   - 売上向上予測: +8-12%
+   - 投資回収期間: 2ヶ月
+
+### 長期戦略（6ヶ月以内）
+1. **顧客ロイヤルティプログラム**
+   - リピート率向上: +25%
+   - LTV向上: +40%
+
+## 📈 来月の数値目標
+- チャット対応: 50件（+11%）
+- 予約獲得: 25件（+9%）
+- 売上: 前月比+10%
+
+戦略的経営により持続的成長を実現しましょう！`;
+
+    default:
+      return generateDemoReport(storeId, reportMonth, 'entry');
+  }
+};
+
 export default router;

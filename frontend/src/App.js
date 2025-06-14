@@ -17,6 +17,7 @@ import ReportDetailPage from './components/ReportDetailPage';
 import ReservationForm from './components/ReservationForm';
 import StandaloneReservationPage from './components/StandaloneReservationPage';
 import LoginPage from './components/LoginPage';
+import { UsageProvider } from './contexts/UsageContext';
 import './App.css';
 
 const Dashboard = ({ storeId, onSelectReport }) => (
@@ -149,11 +150,12 @@ function App() {
       
       {isAuthenticated ? (
         <Router>
-          <Routes>
-            <Route path="/" element={
-              currentPage === 'dashboard' ? (
-                <Dashboard storeId={storeId} onSelectReport={handleSelectReport} />
-              ) : currentPage === 'reportDetail' ? (
+          <UsageProvider storeId={storeId}>
+            <Routes>
+              <Route path="/" element={
+                currentPage === 'dashboard' ? (
+                  <Dashboard storeId={storeId} onSelectReport={handleSelectReport} />
+                ) : currentPage === 'reportDetail' ? (
                 <ReportDetailPage reportId={selectedReportId} onBack={handleBackToDashboard} />
               ) : currentPage === 'standalone-reservation' ? (
                 <StandaloneReservationPage storeId={storeId} />
@@ -207,6 +209,7 @@ function App() {
             } />
             <Route path="/menu-management" element={<MenuManagementPage storeId={storeId} />} />
           </Routes>
+          </UsageProvider>
         </Router>
       ) : null}
     </div>

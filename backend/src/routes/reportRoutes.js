@@ -150,9 +150,9 @@ const generatePlanBasedReport = async (storeId, reportMonth, planType) => {
         case 'entry':
             return generateEntryPlanReport(storeData, reportMonth);
         case 'standard':
-            return generateStandardPlanReport(storeData, reportMonth);
+            return await generateStandardPlanReport(storeData, reportMonth);
         case 'pro':
-            return generateProPlanReport(storeData, reportMonth);
+            return await generateProPlanReport(storeData, reportMonth);
         default:
             return generateEntryPlanReport(storeData, reportMonth);
     }
@@ -283,9 +283,58 @@ const generateEntryPlanReport = (data, reportMonth) => {
 };
 
 /**
- * スタンダードプラン用レポート
+ * スタンダードプラン用レポート（AI生成）
  */
-const generateStandardPlanReport = (data, reportMonth) => {
+const generateStandardPlanReport = async (data, reportMonth) => {
+    try {
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `あなたは居酒屋経営の専門家です。以下のデータを基に、店舗オーナー向けの月次レポートを生成してください。
+
+要件:
+- 日本語で親しみやすい文体
+- Markdown形式で出力
+- 具体的な数値を含める
+- 改善提案を含める
+- スタンダードプラン向け（プロプランの機能は少し触れる程度）
+- 2000文字程度
+
+構成:
+1. 今月のサマリー
+2. 重要指標の分析
+3. 顧客の傾向
+4. 改善提案
+5. 来月への期待`
+                },
+                {
+                    role: "user",
+                    content: `店舗名: ${data.storeName}
+対象月: ${reportMonth}
+チャット対応件数: ${data.chatCount}件
+予約件数: ${data.reservationCount}件
+LINE配信回数: ${data.broadcastCount}回
+よく聞かれる質問: ${JSON.stringify(data.popularQuestions.slice(0, 5))}`
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 2000
+        });
+
+        return completion.choices[0].message.content;
+    } catch (error) {
+        console.error('OpenAI API エラー:', error);
+        // フォールバック: テンプレートレポート
+        return generateStandardPlanReportTemplate(data, reportMonth);
+    }
+};
+
+/**
+ * スタンダードプラン用テンプレートレポート（フォールバック）
+ */
+const generateStandardPlanReportTemplate = (data, reportMonth) => {
     // よく聞かれる質問TOP5を生成
     const topQuestions = data.popularQuestions.slice(0, 5).map((q, i) => 
         `${i + 1}位: ${q.content.slice(0, 20)}... (${q.frequency}件)`
@@ -377,11 +426,63 @@ LINE配信での焼き鳥特集はいかがでしょうか？
 };
 
 /**
- * プロプラン用レポート
+ * プロプラン用レポート（AI生成）
  */
-const generateProPlanReport = (data, reportMonth) => {
+const generateProPlanReport = async (data, reportMonth) => {
+    try {
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `あなたは居酒屋経営の戦略コンサルタントです。以下のデータを基に、プロ級の詳細な月次戦略レポートを生成してください。
+
+要件:
+- 日本語で専門的だが分かりやすい文体
+- Markdown形式で出力
+- 具体的な数値分析と改善提案
+- 競合分析と業界トレンドを含める
+- ROI計算や収益予測を含める
+- 短期・中期・長期の戦略提案
+- 3000-4000文字程度
+
+構成:
+1. エグゼクティブサマリー
+2. 詳細KPI分析
+3. 顧客行動詳細分析
+4. 競合・業界ベンチマーク
+5. 戦略的改善提案（短期・中期・長期）
+6. ROI予測とシミュレーション
+7. アクションプラン`
+                },
+                {
+                    role: "user",
+                    content: `店舗名: ${data.storeName}
+対象月: ${reportMonth}
+チャット対応件数: ${data.chatCount}件
+予約件数: ${data.reservationCount}件
+LINE配信回数: ${data.broadcastCount}回
+よく聞かれる質問TOP15: ${JSON.stringify(data.popularQuestions)}`
+                }
+            ],
+            temperature: 0.6,
+            max_tokens: 4000
+        });
+
+        return completion.choices[0].message.content;
+    } catch (error) {
+        console.error('OpenAI API エラー:', error);
+        // フォールバック: テンプレートレポート
+        return generateProPlanReportTemplate(data, reportMonth);
+    }
+};
+
+/**
+ * プロプラン用テンプレートレポート（フォールバック）
+ */
+const generateProPlanReportTemplate = (data, reportMonth) => {
     // スタンダードの内容に加えて詳細分析
-    const standardReport = generateStandardPlanReport(data, reportMonth);
+    const standardReport = generateStandardPlanReportTemplate(data, reportMonth);
     
     // よく聞かれる質問TOP15を生成
     const topQuestions15 = data.popularQuestions.slice(0, 15).map((q, i) => 

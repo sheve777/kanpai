@@ -1,10 +1,12 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\NoticeBoard.js
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { useUsage } from '../contexts/UsageContext';
 
 const NoticeBoard = ({ storeId }) => {
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { usageData, getCachedData } = useUsage();
 
     // 通知データの取得（実際の実装では複数のAPIから情報を集約）
     const fetchNotices = async () => {
@@ -13,22 +15,21 @@ const NoticeBoard = ({ storeId }) => {
         try {
             setLoading(true);
             
-            // 複数のデータソースから通知情報を取得
-            const [usageResponse, dashboardResponse] = await Promise.allSettled([
-                api.get(`/api/usage/status?store_id=${storeId}`),
+            // UsageContextからキャッシュされたデータを取得
+            const usageResponse = await getCachedData();
+            const [dashboardResponse] = await Promise.allSettled([
                 api.get(`/api/dashboard/summary?store_id=${storeId}`)
             ]);
 
             const dynamicNotices = [];
 
             // 使用量警告の生成
-            if (usageResponse.status === 'fulfilled') {
-                const usageData = usageResponse.value.data;
+            if (usageResponse) {
                 
                 // チャットボット使用量警告
-                if (usageData.usage?.chatbot_responses && usageData.limits?.chatbot_responses) {
-                    const usage = usageData.usage.chatbot_responses;
-                    const limit = usageData.limits.chatbot_responses;
+                if (usageResponse.usage?.chatbot_responses && usageResponse.limits?.chatbot_responses) {
+                    const usage = usageResponse.usage.chatbot_responses;
+                    const limit = usageResponse.limits.chatbot_responses;
                     const percentage = (usage / limit) * 100;
                     
                     if (percentage >= 80) {
@@ -43,8 +44,8 @@ const NoticeBoard = ({ storeId }) => {
                 }
 
                 // LINE配信制限警告
-                if (usageData.lineOfficialStatus?.alertLevel !== 'normal') {
-                    const lineStatus = usageData.lineOfficialStatus;
+                if (usageResponse.lineOfficialStatus?.alertLevel !== 'normal') {
+                    const lineStatus = usageResponse.lineOfficialStatus;
                     let message = '';
                     let badgeType = 'info';
                     let priority = 3;

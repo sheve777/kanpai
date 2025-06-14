@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/axiosConfig.js';
+import { useUsage } from '../contexts/UsageContext';
 
 const MenuWidget = ({ storeId }) => {
     const navigate = useNavigate();
     const [menuStats, setMenuStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { getCachedData } = useUsage();
 
     useEffect(() => {
         fetchMenuStats();
@@ -18,9 +20,9 @@ const MenuWidget = ({ storeId }) => {
         try {
             setLoading(true);
             // メニュー統計と使用量を取得
-            const [menuResponse, usageResponse] = await Promise.allSettled([
+            const [menuResponse, usageData] = await Promise.allSettled([
                 api.get(`/api/stores/${storeId}/menus`),
-                api.get(`/api/usage/status?store_id=${storeId}`)
+                getCachedData()
             ]);
 
             let stats = {
@@ -34,10 +36,9 @@ const MenuWidget = ({ storeId }) => {
                 stats.totalMenus = menuResponse.value.data.length;
             }
 
-            if (usageResponse.status === 'fulfilled') {
-                const usageData = usageResponse.value.data;
-                stats.operationsUsed = usageData.usage?.menu_operations || 0;
-                stats.operationsLimit = usageData.limits?.menu_operations || 0;
+            if (usageData.status === 'fulfilled' && usageData.value) {
+                stats.operationsUsed = usageData.value.usage?.menu_operations || 0;
+                stats.operationsLimit = usageData.value.limits?.menu_operations || 0;
             }
 
             // TODO: 最近の操作履歴を取得するAPIを実装

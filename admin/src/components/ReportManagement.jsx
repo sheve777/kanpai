@@ -2,287 +2,390 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   FileText,
-  Plus,
   Download,
-  Send,
-  Edit,
   Eye,
   Calendar,
   CheckCircle,
   Clock,
-  AlertTriangle,
-  Play
+  AlertCircle,
+  TrendingUp,
+  RefreshCw
 } from 'lucide-react';
 
 const ReportManagement = () => {
   const { api } = useAuth();
   const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [viewingReport, setViewingReport] = useState(null);
+  
+  // レポート生成フォーム
+  const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [planType, setPlanType] = useState('standard');
 
   useEffect(() => {
-    // デモデータを設定
-    const demoReports = [
-      {
-        id: '1',
-        title: '2025年5月分レポート - 全店舗',
-        stores: 12,
-        status: 'pending',
-        statusLabel: '生成待ち',
-        createdAt: new Date(),
-        type: 'bulk'
-      },
-      {
-        id: '2',
-        title: '居酒屋 花まる - 2025年5月',
-        stores: 1,
-        status: 'completed',
-        statusLabel: '配信済み',
-        createdAt: new Date(Date.now() - 86400000),
-        type: 'individual',
-        plan: 'スタンダード'
-      },
-      {
-        id: '3',
-        title: '大衆酒場 さくら - 2025年5月',
-        stores: 1,
-        status: 'draft',
-        statusLabel: '下書き',
-        createdAt: new Date(Date.now() - 172800000),
-        type: 'individual',
-        plan: 'エントリー'
-      },
-      {
-        id: '4',
-        title: '創作居酒屋 月の雫 - 2025年5月',
-        stores: 1,
-        status: 'generating',
-        statusLabel: 'AI生成中',
-        createdAt: new Date(Date.now() - 3600000),
-        type: 'individual',
-        plan: 'プロ'
-      }
-    ];
-    
-    setReports(demoReports);
-    setLoading(false);
+    fetchStores();
   }, []);
 
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      pending: {
-        icon: Clock,
-        color: 'gray',
-        bgColor: '#f3f4f6'
-      },
-      generating: {
-        icon: Play,
-        color: 'blue',
-        bgColor: '#dbeafe'
-      },
-      draft: {
-        icon: Edit,
-        color: 'yellow',
-        bgColor: '#fef3c7'
-      },
-      completed: {
-        icon: CheckCircle,
-        color: 'green',
-        bgColor: '#d1fae5'
-      },
-      error: {
-        icon: AlertTriangle,
-        color: 'red',
-        bgColor: '#fee2e2'
-      }
-    };
-    
-    return statusMap[status] || statusMap.pending;
-  };
+  useEffect(() => {
+    if (selectedStoreId) {
+      fetchReports();
+    }
+  }, [selectedStoreId]);
 
-  const getActionButtons = (report) => {
-    switch (report.status) {
-      case 'pending':
-        return (
-          <button className="action-btn primary">
-            <Play size={16} />
-            AI生成開始
-          </button>
-        );
-      case 'generating':
-        return (
-          <button className="action-btn" disabled>
-            生成中...
-          </button>
-        );
-      case 'draft':
-        return (
-          <div className="action-group">
-            <button className="action-btn secondary">
-              <Edit size={16} />
-              編集
-            </button>
-            <button className="action-btn primary">
-              <Send size={16} />
-              配信
-            </button>
-          </div>
-        );
-      case 'completed':
-        return (
-          <div className="action-group">
-            <button className="action-btn secondary">
-              <Eye size={16} />
-              確認
-            </button>
-            <button className="action-btn secondary">
-              <Download size={16} />
-              ダウンロード
-            </button>
-            <button className="action-btn warning">
-              <Edit size={16} />
-              再生成
-            </button>
-          </div>
-        );
-      default:
-        return null;
+  const fetchStores = async () => {
+    try {
+      const response = await api.get('/api/admin/stores');
+      const storeList = response.data.stores || [];
+      setStores(storeList);
+      if (storeList.length > 0 && !selectedStoreId) {
+        setSelectedStoreId(storeList[0].id);
+      }
+    } catch (error) {
+      console.error('店舗一覧の取得に失敗しました:', error);
+      // デモデータ
+      setStores([
+        { id: 'test', name: 'デモ居酒屋' },
+        { id: 'demo-1', name: '花まる 渋谷店' },
+        { id: 'demo-2', name: 'さくら 新宿店' }
+      ]);
+      setSelectedStoreId('test');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="report-management-loading">
-        <div className="loading-spinner"></div>
-        <p>レポート情報を読み込み中...</p>
-      </div>
-    );
-  }
+  const fetchReports = async () => {
+    if (!selectedStoreId) return;
+    
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/reports?store_id=${selectedStoreId}`);
+      setReports(response.data.reports || response.data || []);
+    } catch (error) {
+      console.error('レポート一覧の取得に失敗しました:', error);
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateReport = async () => {
+    if (!selectedStoreId || !reportMonth || !planType) {
+      alert('すべての項目を選択してください');
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const response = await api.post('/api/reports/generate', {
+        store_id: selectedStoreId,
+        report_month: reportMonth + '-01',
+        plan_type: planType
+      });
+
+      alert('レポートの生成が完了しました！');
+      fetchReports(); // レポート一覧を更新
+    } catch (error) {
+      console.error('レポート生成に失敗しました:', error);
+      alert('レポート生成に失敗しました。もう一度お試しください。');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const viewReport = async (reportId) => {
+    try {
+      const response = await api.get(`/api/reports/${reportId}`);
+      const reportData = response.data.report || response.data;
+      setViewingReport(reportData);
+    } catch (error) {
+      console.error('レポート詳細の取得に失敗しました:', error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '不明';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatMonth = (dateString) => {
+    if (!dateString) return '不明';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long'
+    });
+  };
+
+  const getPlanBadgeClass = (planType) => {
+    switch (planType) {
+      case 'pro': return 'badge-pro';
+      case 'standard': return 'badge-standard';
+      case 'entry': return 'badge-entry';
+      default: return 'badge-default';
+    }
+  };
+
+  const getPlanDisplayName = (planType) => {
+    switch (planType) {
+      case 'pro': return 'プロ';
+      case 'standard': return 'スタンダード';
+      case 'entry': return 'エントリー';
+      default: return planType;
+    }
+  };
+
+  const renderReportContent = (content) => {
+    if (!content) return '';
+    
+    // Markdown風のコンテンツをHTMLに変換
+    return content
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  };
 
   return (
     <div className="report-management">
       <div className="page-header">
-        <h1>月次レポート管理</h1>
-        <button className="btn-primary">
-          <Plus size={18} />
-          一括生成
-        </button>
+        <h1><FileText size={28} /> レポート管理</h1>
+        <p className="page-description">月次レポートの生成と管理</p>
       </div>
 
-      {/* Summary Stats */}
-      <div className="report-stats">
-        <div className="stat-card">
-          <div className="stat-label">総レポート数</div>
-          <div className="stat-value">{reports.length}</div>
+      {/* 店舗選択 */}
+      <div className="card">
+        <div className="card-header">
+          <h2>店舗選択</h2>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">生成待ち</div>
-          <div className="stat-value">
-            {reports.filter(r => r.status === 'pending').length}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">配信済み</div>
-          <div className="stat-value">
-            {reports.filter(r => r.status === 'completed').length}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">下書き</div>
-          <div className="stat-value">
-            {reports.filter(r => r.status === 'draft').length}
-          </div>
+        <div className="card-content">
+          <select 
+            value={selectedStoreId} 
+            onChange={(e) => setSelectedStoreId(e.target.value)}
+            className="form-select"
+          >
+            <option value="">店舗を選択してください</option>
+            {stores.map(store => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Reports List */}
-      <div className="reports-list">
-        {reports.map(report => {
-          const statusInfo = getStatusInfo(report.status);
-          const StatusIcon = statusInfo.icon;
-          
-          return (
-            <div key={report.id} className="report-card">
-              <div className="report-header">
-                <div className="report-info">
-                  <h3>{report.title}</h3>
-                  <div className="report-meta">
-                    {report.type === 'bulk' ? (
-                      <span className="meta-item">
-                        <FileText size={14} />
-                        対象: {report.stores}店舗
-                      </span>
-                    ) : (
-                      <span className="meta-item">
-                        <FileText size={14} />
-                        {report.plan}プラン
-                      </span>
-                    )}
-                    <span className="meta-item">
-                      <Calendar size={14} />
-                      {report.createdAt.toLocaleDateString('ja-JP')}
-                    </span>
-                  </div>
+      {selectedStoreId && (
+        <>
+          {/* レポート生成 */}
+          <div className="card">
+            <div className="card-header">
+              <h2><TrendingUp size={20} /> 新規レポート生成</h2>
+            </div>
+            <div className="card-content">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>対象月</label>
+                  <input
+                    type="month"
+                    value={reportMonth}
+                    onChange={(e) => setReportMonth(e.target.value)}
+                    max={new Date().toISOString().slice(0, 7)}
+                    className="form-input"
+                  />
                 </div>
-                
-                <div className="report-status">
-                  <span 
-                    className={`status-badge status-${statusInfo.color}`}
-                    style={{ backgroundColor: statusInfo.bgColor }}
+                <div className="form-group">
+                  <label>プランタイプ</label>
+                  <select
+                    value={planType}
+                    onChange={(e) => setPlanType(e.target.value)}
+                    className="form-select"
                   >
-                    <StatusIcon size={16} />
-                    {report.statusLabel}
-                  </span>
+                    <option value="entry">エントリープラン</option>
+                    <option value="standard">スタンダードプラン</option>
+                    <option value="pro">プロプラン</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <button
+                    onClick={generateReport}
+                    disabled={generating}
+                    className="btn btn-primary"
+                  >
+                    {generating ? (
+                      <>
+                        <div className="spinner-small"></div>
+                        生成中...
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={20} />
+                        レポート生成
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
               
-              <div className="report-actions">
-                {getActionButtons(report)}
+              <div className="alert alert-info">
+                <AlertCircle size={16} />
+                <div>
+                  <p><strong>レポート生成について</strong></p>
+                  <ul>
+                    <li>デモモードではAI生成を模したサンプルレポートが生成されます</li>
+                    <li>本番環境ではOpenAI APIを使用して詳細な分析レポートが生成されます</li>
+                    <li>プランによって異なる詳細度のレポートが生成されます</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      {/* Monthly Report Schedule */}
-      <div className="schedule-section">
-        <h2>📅 月次レポート自動生成スケジュール</h2>
-        <div className="schedule-info">
-          <div className="schedule-item">
-            <strong>実行日:</strong> 毎月1日 午前9:00
+          {/* レポート一覧 */}
+          <div className="card">
+            <div className="card-header">
+              <h2><Calendar size={20} /> 生成済みレポート</h2>
+              <button 
+                onClick={fetchReports} 
+                className="btn btn-secondary btn-sm"
+                disabled={loading}
+              >
+                <RefreshCw size={16} />
+                更新
+              </button>
+            </div>
+            <div className="card-content">
+              {loading ? (
+                <div className="loading-container">
+                  <div className="loading-spinner"></div>
+                  <p>レポートを読み込み中...</p>
+                </div>
+              ) : reports.length > 0 ? (
+                <div className="report-list">
+                  {reports.map((report) => (
+                    <div key={report.id} className="report-item">
+                      <div className="report-info">
+                        <h3>{formatMonth(report.report_month)} レポート</h3>
+                        <div className="report-meta">
+                          <span className={`badge ${getPlanBadgeClass(report.plan_type)}`}>
+                            {getPlanDisplayName(report.plan_type)}
+                          </span>
+                          <span className="status-badge status-green">
+                            <CheckCircle size={16} />
+                            {report.status === 'completed' ? '生成済み' : report.status}
+                          </span>
+                          <span className="text-muted">
+                            <Clock size={14} />
+                            {formatDate(report.generated_at || report.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="report-actions">
+                        <button
+                          onClick={() => viewReport(report.id)}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          <Eye size={16} />
+                          詳細
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          disabled
+                          title="PDF出力は今後実装予定"
+                        >
+                          <Download size={16} />
+                          PDF
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <FileText size={48} />
+                  <p>まだレポートが生成されていません</p>
+                  <p className="text-muted">上のフォームから新規レポートを生成してください</p>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="schedule-item">
-            <strong>対象:</strong> 全アクティブ店舗
-          </div>
-          <div className="schedule-item">
-            <strong>配信:</strong> 生成完了後、自動配信
-          </div>
-        </div>
-        
-        <div className="schedule-actions">
-          <button className="btn-secondary">
-            スケジュール設定
-          </button>
-          <button className="btn-secondary">
-            手動実行
-          </button>
-        </div>
-      </div>
 
-      {/* Help Section */}
-      <div className="help-section">
-        <h3>💡 レポート管理について</h3>
-        <div className="help-content">
-          <div className="help-item">
-            <strong>AI生成:</strong> OpenAI APIを使用して、店舗の月次データから自動でレポートを生成します
+          {/* 月次スケジュール */}
+          <div className="card">
+            <div className="card-header">
+              <h2><Calendar size={20} /> 自動生成スケジュール</h2>
+            </div>
+            <div className="card-content">
+              <div className="schedule-info">
+                <div className="info-item">
+                  <strong>実行日時：</strong>毎月1日 午前9:00
+                </div>
+                <div className="info-item">
+                  <strong>対象店舗：</strong>全アクティブ店舗
+                </div>
+                <div className="info-item">
+                  <strong>配信方法：</strong>LINE経由で自動配信
+                </div>
+              </div>
+              <div className="alert alert-warning">
+                <AlertCircle size={16} />
+                <span>自動生成機能は今後実装予定です</span>
+              </div>
+            </div>
           </div>
-          <div className="help-item">
-            <strong>カスタマイズ:</strong> 生成されたレポートは編集・カスタマイズが可能です
-          </div>
-          <div className="help-item">
-            <strong>配信:</strong> LINE経由で店舗オーナーに自動配信されます
+        </>
+      )}
+
+      {/* レポート詳細モーダル */}
+      {viewingReport && (
+        <div className="modal-overlay" onClick={() => setViewingReport(null)}>
+          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                {formatMonth(viewingReport.report_month)} レポート
+                <span className={`badge ${getPlanBadgeClass(viewingReport.plan_type)} ml-2`}>
+                  {getPlanDisplayName(viewingReport.plan_type)}
+                </span>
+              </h2>
+              <button 
+                onClick={() => setViewingReport(null)}
+                className="btn-close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div 
+                className="report-content markdown-content"
+                dangerouslySetInnerHTML={{ 
+                  __html: renderReportContent(viewingReport.report_content || viewingReport.data) 
+                }}
+              />
+            </div>
+            <div className="modal-footer">
+              <button 
+                onClick={() => setViewingReport(null)}
+                className="btn btn-secondary"
+              >
+                閉じる
+              </button>
+              <button 
+                className="btn btn-primary"
+                disabled
+              >
+                <Download size={16} />
+                PDFダウンロード
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

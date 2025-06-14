@@ -1,6 +1,7 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\UsageStatus.js
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { useUsage } from '../contexts/UsageContext';
 
 const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
     const percentage = limit > 0 ? Math.min(100, (usage / limit) * 100) : 0;
@@ -237,42 +238,16 @@ const LineUsageDetails = ({ lineStatus, friendsCount, monthlyStats, onRequestUpg
 };
 
 const UsageStatus = ({ storeId }) => {
-    const [status, setStatus] = useState(null);
     const [showLineDetails, setShowLineDetails] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const { usageData: status, loading, error, refetch } = useUsage();
 
-    // fetchStatusを先に定義
-    const fetchStatus = async () => {
-        if (!storeId) return;
-        
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await api.get(`/api/usage/status?store_id=${storeId}`);
-            setStatus(response.data);
-            
-            // LINE制限が警告レベル以上の場合は詳細を自動表示
-            if (response.data.lineOfficialStatus?.alertLevel !== 'normal') {
-                setShowLineDetails(true);
-            }
-            
-        } catch (error) { 
-            console.error("プラン・利用状況の取得に失敗しました:", error);
-            setError('使用状況の取得に失敗しました。再読み込みしてください。');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // LINE制限が警告レベル以上の場合は詳細を自動表示
     useEffect(() => {
-        fetchStatus();
-        
-        // 定期的に更新（5分ごと）
-        const interval = setInterval(fetchStatus, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, [storeId]);
+        if (status?.lineOfficialStatus?.alertLevel !== 'normal') {
+            setShowLineDetails(true);
+        }
+    }, [status]);
 
     if (loading) {
         return (
@@ -339,13 +314,10 @@ const UsageStatus = ({ storeId }) => {
                     <p style={{ 
                         color: 'var(--color-text)',
                         marginBottom: '16px'
-                    }}>{error}</p>
+                    }}>{error?.message || 'エラーが発生しました'}</p>
                     <button 
                         className="action-button"
-                        onClick={() => {
-                            setError(null);
-                            fetchStatus();
-                        }}
+                        onClick={refetch}
                     >
                         再試行
                     </button>
