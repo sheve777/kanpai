@@ -18,5 +18,5 @@ COPY . .
 
 EXPOSE 3002
 
-# Development command with nodemon for hot reload
-CMD ["npm", "run", "dev"]
+# Development command - use npm start instead of dev
+CMD ["npm", "start"]

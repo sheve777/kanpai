@@ -4,7 +4,14 @@ import pool from '../config/db.js';
 import { searchMenus } from './menuService.js';
 import { checkChatbotUsage } from '../middlewares/usageLimit.js';
 
-const openai = new OpenAI();
+// OpenAI初期化を条件付きに変更
+let openai = null;
+try {
+    openai = new OpenAI();
+    console.log('✅ OpenAI client initialized successfully');
+} catch (error) {
+    console.warn('⚠️ OpenAI initialization skipped:', error.message);
+}
 
 // ★★★ AIが使う「道具」の定義を完全に復元 ★★★
 const tools = [
@@ -194,6 +201,14 @@ const logMessage = async (sessionId, role, content, meta = null) => {
 
 export const generateChatResponse = async (userMessage, storeId, sessionId) => {
     console.log(`[チャットサービス] セッションID(${sessionId}) 受信: "${userMessage}"`);
+    
+    // OpenAIが初期化されていない場合はエラーメッセージを返す
+    if (!openai) {
+        const errorMessage = "申し訳ございません。AIチャットサービスは現在利用できません。お店に直接お問い合わせください。";
+        await logMessage(sessionId, 'user', userMessage, null);
+        await logMessage(sessionId, 'assistant', errorMessage);
+        return errorMessage;
+    }
     
     await logMessage(sessionId, 'user', userMessage, null);
 
