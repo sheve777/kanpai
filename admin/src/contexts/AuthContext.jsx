@@ -3,8 +3,12 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// API設定
-const API_BASE_URL = 'http://localhost:3002/api/admin';
+// API設定 - 環境変数で動的に設定
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://kanpai-plus.jp/api/admin';
+
+// ローカル開発環境では認証をスキップ
+const SKIP_AUTH_LOCAL = import.meta.env.VITE_SKIP_AUTH_LOCAL === 'true' || 
+                       (!import.meta.env.VITE_API_BASE_URL && window.location.hostname === 'localhost');
 
 // Axiosインスタンス作成
 const api = axios.create({
@@ -59,6 +63,20 @@ export const AuthProvider = ({ children }) => {
   // 初期化時にトークンをチェック
   useEffect(() => {
     const initAuth = async () => {
+      // ローカル環境では認証をスキップ
+      if (SKIP_AUTH_LOCAL) {
+        console.log('🏠 ローカル環境：認証をスキップして管理画面にアクセス');
+        setIsAuthenticated(true);
+        setAdmin({
+          id: 'local-admin',
+          username: 'admin',
+          email: 'admin@kanpai.local',
+          fullName: 'ローカル管理者'
+        });
+        setLoading(false);
+        return;
+      }
+
       const savedToken = localStorage.getItem('admin_token');
       
       if (!savedToken) {
@@ -93,10 +111,27 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
+      // ローカル環境では即座にログイン成功
+      if (SKIP_AUTH_LOCAL) {
+        console.log('🏠 ローカル環境：認証をスキップしてログイン成功');
+        setIsAuthenticated(true);
+        setAdmin({
+          id: 'local-admin',
+          username: 'admin',
+          email: 'admin@kanpai.local',
+          fullName: 'ローカル管理者'
+        });
+        return { success: true };
+      }
+      
+      console.log('🔐 ログイン試行:', { username, API_URL: API_BASE_URL });
+      
       const response = await api.post('/login', {
         username,
         password
       });
+      
+      console.log('✅ ログインレスポンス:', response.data);
 
       if (response.data.success) {
         const { token: newToken, admin: adminData } = response.data;
@@ -115,7 +150,12 @@ export const AuthProvider = ({ children }) => {
         };
       }
     } catch (error) {
-      console.error('ログインエラー:', error);
+      console.error('❌ ログインエラー詳細:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        code: error.code
+      });
       
       let errorMessage = 'ログインに失敗しました';
       

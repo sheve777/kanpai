@@ -39,7 +39,9 @@
       "Bash(cmd.exe:*)",
       "Bash(find:*)",
       "Bash(chmod:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "WebFetch(domain:kanpai-plus.jp)",
+      "Bash(start-admin.bat)"
     ],
     "deny": []
   }

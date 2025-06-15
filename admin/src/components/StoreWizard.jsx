@@ -204,6 +204,33 @@ const StoreWizard = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
+      // ローカル環境では作成をシミュレート
+      if (window.location.hostname === 'localhost') {
+        console.log('🏠 ローカル環境：新店舗作成シミュレーション');
+        console.log('作成データ:', {
+          basicInfo: wizardData.basicInfo,
+          lineSetup: wizardData.lineSetup,
+          googleSetup: wizardData.googleSetup,
+          aiSetup: wizardData.aiSetup
+        });
+        
+        // 2秒後に成功レスポンスをシミュレート
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const mockStoreId = `local-store-${Date.now()}`;
+        updateWizardData('completion', {
+          storeId: mockStoreId,
+          setupComplete: true,
+          loginInfo: {
+            username: wizardData.basicInfo.name.replace(/\s+/g, '').toLowerCase(),
+            temporaryPassword: `${wizardData.basicInfo.name.replace(/\s+/g, '').toLowerCase()}123`
+          }
+        });
+        
+        alert(`新店舗「${wizardData.basicInfo.name}」を作成しました！（ローカル環境）`);
+        return;
+      }
+      
       const response = await api.post('/stores/create', {
         basicInfo: wizardData.basicInfo,
         lineSetup: wizardData.lineSetup,
@@ -214,7 +241,8 @@ const StoreWizard = ({ isOpen, onClose }) => {
       if (response.data.success) {
         updateWizardData('completion', {
           storeId: response.data.storeId,
-          setupComplete: true
+          setupComplete: true,
+          loginInfo: response.data.loginInfo
         });
       } else {
         throw new Error(response.data.error || '店舗作成に失敗しました');

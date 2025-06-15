@@ -4,6 +4,9 @@ import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import StoreManagement from './components/StoreManagement';
 import ReportManagement from './components/ReportManagement';
+import RevenueManagement from './components/RevenueManagement';
+import BackupExport from './components/BackupExport';
+import SystemSettings from './components/SystemSettings';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
@@ -63,6 +66,36 @@ function AppContent() {
               <ProtectedRoute>
                 <Layout>
                   <ReportManagement />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/revenue" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RevenueManagement />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/backup" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <BackupExport />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/system" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SystemSettings />
                 </Layout>
               </ProtectedRoute>
             } 

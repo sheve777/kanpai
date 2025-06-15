@@ -14,7 +14,8 @@ import {
   LogOut,
   Menu,
   X,
-  User
+  User,
+  HardDrive
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -54,18 +55,18 @@ const Layout = ({ children }) => {
       active: location.pathname === '/revenue'
     },
     {
+      id: 'backup',
+      label: 'バックアップ',
+      icon: HardDrive,
+      path: '/backup',
+      active: location.pathname === '/backup'
+    },
+    {
       id: 'system',
       label: 'システム',
       icon: Settings,
       path: '/system',
       active: location.pathname === '/system'
-    },
-    {
-      id: 'support',
-      label: 'サポート',
-      icon: MessageSquare,
-      path: '/support',
-      active: location.pathname === '/support'
     }
   ];
 
