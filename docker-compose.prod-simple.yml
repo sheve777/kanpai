@@ -1,0 +1,98 @@
+# Production Docker Compose for kanpAI - Simplified
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanpai_production
+      POSTGRES_USER: kanpai_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-C9gF+GzuAh/DpFLj6yJbV7uuew9GYO8zo2xmNkqJ1JI=}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kanpai_network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-w2qwOISIw44mlczSG03OSURrbIUcXFnC}
+    volumes:
+      - redis_data:/data
+    networks:
+      - kanpai_network
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3002"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://kanpai_user:${DB_PASSWORD:-C9gF+GzuAh/DpFLj6yJbV7uuew9GYO8zo2xmNkqJ1JI=}@database:5432/kanpai_production
+      REDIS_URL: redis://:${REDIS_PASSWORD:-w2qwOISIw44mlczSG03OSURrbIUcXFnC}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-6cad23d5a0ec265d8d3e791d869741d265412300eb98fbf9395596c79617bb45}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dummy-key-for-testing}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-dummy-line-token}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-dummy-line-secret}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_dummy}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_dummy}
+      FRONTEND_URL: ${FRONTEND_URL:-https://kanpai-plus.jp}
+      ADMIN_URL: ${ADMIN_URL:-https://admin.kanpai-plus.jp}
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      - database
+      - redis
+    networks:
+      - kanpai_network
+
+  # Frontend Web Server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_BASE_URL: ${API_BASE_URL:-https://api.kanpai-plus.jp}
+      REACT_APP_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_dummy}
+      REACT_APP_ENVIRONMENT: production
+    depends_on:
+      - backend
+    networks:
+      - kanpai_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - kanpai_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  kanpai_network:
+    driver: bridge
