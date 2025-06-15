@@ -72,23 +72,46 @@ echo.
 echo [2/4] Connecting to VPS and deploying...
 echo ========================================
 
-:: VPS operations
-ssh %VPS_USER%@%VPS_IP% "cd ~/kanpai && git pull && docker-compose -f docker-compose.prod.yml restart && echo 'Restart complete!'"
+:: VPS operations - Updated for individual containers
+ssh %VPS_USER%@%VPS_IP% "cd ~/kanpai && git pull && echo 'Code updated!'"
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] SSH connection or VPS command failed
-    echo.
-    echo Possible causes:
-    echo 1. SSH key not configured
-    echo 2. Wrong VPS IP address
-    echo 3. Different directory structure on VPS
+    echo [ERROR] SSH connection or git pull failed
     pause
     exit /b 1
 )
 
 echo.
-echo Deploy complete!
+echo [3/4] Which service to restart?
+echo 1. Backend only
+echo 2. Frontend only
+echo 3. Admin only
+echo 4. Nginx only
+echo 5. All services
+echo 0. Skip restart
+echo.
+set /p RESTART_CHOICE="Enter your choice (0-5): "
+
+if "%RESTART_CHOICE%"=="1" (
+    ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_backend && echo 'Backend restarted!'"
+) else if "%RESTART_CHOICE%"=="2" (
+    ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_frontend && echo 'Frontend restarted!'"
+) else if "%RESTART_CHOICE%"=="3" (
+    ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_admin && echo 'Admin restarted!'"
+) else if "%RESTART_CHOICE%"=="4" (
+    ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_nginx && echo 'Nginx restarted!'"
+) else if "%RESTART_CHOICE%"=="5" (
+    ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_backend kanpai_frontend kanpai_admin kanpai_nginx && echo 'All services restarted!'"
+) else (
+    echo Skipping restart...
+)
+
+echo.
+echo [4/4] Deploy complete!
 echo ========================================
-echo URL: https://kanpai-plus.jp
+echo URLs:
+echo - Main: https://kanpai-plus.jp
+echo - Admin: https://admin.kanpai-plus.jp
+echo - API: https://kanpai-plus.jp/api/health
 echo ========================================
 echo.
 pause
