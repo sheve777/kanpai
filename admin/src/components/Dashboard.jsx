@@ -26,8 +26,6 @@ import {
   HardDrive
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-// import BookmarkManager from './BookmarkManager';
-// import LayoutCustomizer from './LayoutCustomizer';
 
 const Dashboard = () => {
   const { api } = useAuth();
