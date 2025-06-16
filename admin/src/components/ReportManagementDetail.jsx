@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import ReportDetailView from './ReportDetailView';
 import {
   FileText,
   Calendar,
@@ -18,27 +19,56 @@ import {
   DollarSign,
   MessageSquare,
   BarChart3,
-  Sparkles
+  Sparkles,
+  ArrowLeft,
+  Store
 } from 'lucide-react';
 
-const ReportManagementDetail = () => {
+const ReportManagementDetail = ({ storeId, onBack }) => {
   const { api } = useAuth();
   const [reports, setReports] = useState([]);
+  const [storeInfo, setStoreInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
-  const [selectedStores, setSelectedStores] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [viewingReport, setViewingReport] = useState(null);
 
   // ローカル環境判定
   const isLocalEnv = window.location.hostname === 'localhost';
 
   useEffect(() => {
     fetchReports();
-  }, [selectedMonth]);
+    fetchStoreInfo();
+  }, [selectedMonth, storeId]);
+
+  const fetchStoreInfo = async () => {
+    try {
+      // ローカル環境でのモックデータ
+      if (isLocalEnv) {
+        const mockStores = {
+          'demo-store-001': { name: '居酒屋 花まる 渋谷店', location: '東京都渋谷区' },
+          'demo-store-002': { name: '海鮮居酒屋 大漁丸', location: '東京都新宿区' },
+          'demo-store-003': { name: '串焼き専門店 炭火屋', location: '東京都世田谷区' },
+          'demo-store-004': { name: '創作和食 風花', location: '東京都品川区' },
+          'demo-store-005': { name: '昭和レトロ居酒屋 のんべえ横丁', location: '東京都台東区' }
+        };
+        setStoreInfo(mockStores[storeId] || { name: '未知の店舗', location: '' });
+        return;
+      }
+      
+      // 本番API呼び出し
+      const response = await api.get(`/stores/${storeId}`);
+      if (response.data.success) {
+        setStoreInfo(response.data.store);
+      }
+    } catch (error) {
+      console.error('店舗情報取得エラー:', error);
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -47,7 +77,7 @@ const ReportManagementDetail = () => {
       // ローカル環境でのモックデータ
       if (isLocalEnv) {
         console.log('🏠 ローカル環境：モックレポートデータを使用');
-        const mockReports = [
+        const allMockReports = [
           {
             id: 'report-001',
             storeId: 'demo-store-001',
@@ -136,16 +166,52 @@ const ReportManagementDetail = () => {
               aiResponseRate: 0.96
             },
             content: '（レポート生成中...）'
+          },
+          {
+            id: 'report-004',
+            storeId: 'demo-store-004',
+            storeName: '創作和食 風花',
+            month: selectedMonth,
+            status: 'sent',
+            generatedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+            sentAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+            metrics: {
+              totalReservations: 134,
+              totalRevenue: 789000,
+              averageSpend: 5888,
+              newCustomers: 28,
+              repeatRate: 0.76,
+              totalMessages: 267,
+              aiResponseRate: 0.91
+            },
+            content: `【${selectedMonth.replace('-', '年')}月】月次レポート
+
+◆ 営業実績
+予約数134件、売上789,000円を記録しました。
+
+◆ 顧客分析
+- 新規顧客: 28名
+- リピート率: 76%（優秀な水準）
+- 平均客単価: 5,888円
+
+◆ LINE活用状況
+- メッセージ数: 267件
+- AI応答精度: 91%
+
+◆ 来月への提案
+季節メニューの積極的な発信により、さらなる集客向上を目指しましょう。`
           }
         ];
         
-        setReports(mockReports);
+        // 指定されたstoreIdのレポートのみをフィルタリング
+        const filteredReports = allMockReports.filter(report => report.storeId === storeId);
+        setReports(filteredReports);
         setLoading(false);
         return;
       }
       
       // 本番API呼び出し
-      const response = await api.get(`/reports?month=${selectedMonth}`);
+      const response = await api.get(`/reports?month=${selectedMonth}&storeId=${storeId}`);
       if (response.data.success) {
         setReports(response.data.reports);
       }
@@ -165,7 +231,7 @@ const ReportManagementDetail = () => {
         console.log('🤖 AI レポート生成シミュレーション');
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        alert(`${selectedStores.length || 'すべての'}店舗のレポートを生成しました！`);
+        alert(`${storeInfo?.name || '店舗'}のレポートを生成しました！`);
         fetchReports();
         return;
       }
@@ -173,7 +239,7 @@ const ReportManagementDetail = () => {
       // 本番API呼び出し
       const response = await api.post('/reports/generate', {
         month: selectedMonth,
-        storeIds: selectedStores.length > 0 ? selectedStores : undefined
+        storeIds: [storeId]
       });
       
       if (response.data.success) {
@@ -286,10 +352,35 @@ const ReportManagementDetail = () => {
     );
   }
 
+  // レポート詳細画面を表示
+  if (viewingReport) {
+    return (
+      <ReportDetailView 
+        reportId={viewingReport}
+        onBack={() => setViewingReport(null)}
+      />
+    );
+  }
+
   return (
-    <div className="report-management">
+    <div className="report-management-detail">
       <div className="page-header">
-        <h1>レポート管理</h1>
+        <div className="header-left">
+          <button 
+            className="back-button"
+            onClick={onBack}
+            title="店舗一覧に戻る"
+          >
+            <ArrowLeft size={18} />
+            戻る
+          </button>
+          <div className="header-title">
+            <h1>📊 {storeInfo?.name || '店舗'} - レポート詳細</h1>
+            {storeInfo?.location && (
+              <p className="store-location">{storeInfo.location}</p>
+            )}
+          </div>
+        </div>
         <div className="header-actions">
           <select 
             value={selectedMonth} 
@@ -318,128 +409,153 @@ const ReportManagementDetail = () => {
             ) : (
               <>
                 <Sparkles size={18} />
-                一括生成
+                レポート生成
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* レポート統計 */}
-      <div className="report-stats">
-        <div className="stat-card">
-          <FileText size={24} />
-          <div>
-            <h3>{reports.length}</h3>
-            <p>総レポート数</p>
+      {/* レポート統計サマリー（横一列） */}
+      <div className="report-summary-bar">
+        <div className="summary-container">
+          <div className="summary-title">📈 {selectedMonth.replace('-', '年')}月 {storeInfo?.name || '店舗'}レポート</div>
+          <div className="summary-stats">
+            <div className="summary-stat-item">
+              <FileText size={18} style={{ color: '#64748b' }} />
+              <div className="stat-content">
+                <span className="stat-value">{reports.length}</span>
+                <span className="stat-label">総レポート数</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <CheckCircle size={18} style={{ color: '#10b981' }} />
+              <div className="stat-content">
+                <span className="stat-value">{reports.filter(r => r.status === 'sent').length}</span>
+                <span className="stat-label">配信済み</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <Clock size={18} style={{ color: '#f59e0b' }} />
+              <div className="stat-content">
+                <span className="stat-value">{reports.filter(r => r.status === 'generated').length}</span>
+                <span className="stat-label">未配信</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <Edit3 size={18} style={{ color: '#8b5cf6' }} />
+              <div className="stat-content">
+                <span className="stat-value">{reports.filter(r => r.status === 'draft').length}</span>
+                <span className="stat-label">下書き</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="stat-card">
-          <CheckCircle size={24} />
-          <div>
-            <h3>{reports.filter(r => r.status === 'sent').length}</h3>
-            <p>配信済み</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <Clock size={24} />
-          <div>
-            <h3>{reports.filter(r => r.status === 'generated').length}</h3>
-            <p>未配信</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <Edit3 size={24} />
-          <div>
-            <h3>{reports.filter(r => r.status === 'draft').length}</h3>
-            <p>下書き</p>
+          <div className="summary-actions">
+            <span className="update-info">
+              <Calendar size={14} />
+              対象月: {selectedMonth.replace('-', '年')}月
+            </span>
           </div>
         </div>
       </div>
 
-      {/* レポート一覧 */}
-      <div className="reports-grid">
-        {reports.map(report => {
-          const statusInfo = getStatusBadge(report.status);
-          const StatusIcon = statusInfo.icon;
-          
-          return (
-            <div key={report.id} className="report-card">
-              <div className="report-header">
-                <h3>{report.storeName}</h3>
-                <span className={`status-badge ${statusInfo.className}`}>
-                  <StatusIcon size={16} />
-                  {statusInfo.label}
-                </span>
-              </div>
-              
-              <div className="report-metrics">
-                <div className="metric">
-                  <Users size={16} />
-                  <span>{report.metrics.totalReservations}件</span>
-                </div>
-                <div className="metric">
-                  <DollarSign size={16} />
-                  <span>¥{report.metrics.totalRevenue.toLocaleString()}</span>
-                </div>
-                <div className="metric">
-                  <TrendingUp size={16} />
-                  <span>{(report.metrics.repeatRate * 100).toFixed(0)}%</span>
-                </div>
-                <div className="metric">
-                  <MessageSquare size={16} />
-                  <span>{report.metrics.totalMessages}件</span>
-                </div>
-              </div>
-              
-              <div className="report-content-preview">
-                {report.content.slice(0, 100)}...
-              </div>
-              
-              <div className="report-actions">
-                <button 
-                  className="action-btn"
-                  onClick={() => handleEditReport(report)}
-                  title="編集"
-                >
-                  <Edit3 size={16} />
-                </button>
-                <button 
-                  className="action-btn"
-                  onClick={() => setSelectedReport(report)}
-                  title="プレビュー"
-                >
-                  <Eye size={16} />
-                </button>
-                <button 
-                  className="action-btn"
-                  title="ダウンロード"
-                >
-                  <Download size={16} />
-                </button>
-                <button 
-                  className="action-btn primary"
-                  onClick={() => handleSendReport(report.id)}
-                  disabled={report.status === 'sent' || sending}
-                  title="LINE配信"
-                >
-                  <Send size={16} />
-                </button>
-              </div>
-              
-              <div className="report-footer">
-                <span className="timestamp">
-                  生成: {new Date(report.generatedAt).toLocaleDateString('ja-JP')}
-                </span>
-                {report.sentAt && (
-                  <span className="timestamp">
-                    配信: {new Date(report.sentAt).toLocaleDateString('ja-JP')}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* レポート一覧テーブル */}
+      <div className="reports-section">
+        <h2>📄 {storeInfo?.name || '店舗'}のレポート履歴</h2>
+        <div className="table-container">
+          <table className="reports-table">
+            <thead>
+              <tr>
+                <th>店舗名</th>
+                <th>ステータス</th>
+                <th>営業実績</th>
+                <th>顧客分析</th>
+                <th>LINE活用</th>
+                <th>生成日</th>
+                <th>配信日</th>
+                <th>アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.map(report => {
+                const statusInfo = getStatusBadge(report.status);
+                const StatusIcon = statusInfo.icon;
+                
+                return (
+                  <tr key={report.id}>
+                    <td>
+                      <div className="store-name-cell">
+                        <FileText size={16} />
+                        <span>{report.storeName}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${statusInfo.className}`}>
+                        <StatusIcon size={12} />
+                        {statusInfo.label}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="metrics-cell">
+                        <span>予約: {report.metrics.totalReservations}件</span>
+                        <span>売上: ¥{(report.metrics.totalRevenue / 1000).toFixed(0)}K</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="metrics-cell">
+                        <span>新規: {report.metrics.newCustomers}名</span>
+                        <span>リピート: {(report.metrics.repeatRate * 100).toFixed(0)}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="metrics-cell">
+                        <span>メッセージ: {report.metrics.totalMessages}件</span>
+                        <span>応答率: {(report.metrics.aiResponseRate * 100).toFixed(0)}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="date-cell">
+                        {report.generatedAt ? new Date(report.generatedAt).toLocaleDateString('ja-JP') : '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="date-cell">
+                        {report.sentAt ? new Date(report.sentAt).toLocaleDateString('ja-JP') : '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button 
+                          className="btn-sm primary"
+                          onClick={() => setViewingReport(report.id)}
+                          title="詳細表示"
+                        >
+                          <Eye size={14} />
+                          詳細表示
+                        </button>
+                        {report.status === 'generated' && (
+                          <button 
+                            className="btn-sm"
+                            onClick={() => handleSendReport(report.id)}
+                            disabled={sending}
+                            title="配信"
+                            style={{ background: '#10b981', color: 'white' }}
+                          >
+                            <Send size={14} />
+                            配信
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* レポートプレビューモーダル */}

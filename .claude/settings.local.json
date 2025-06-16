@@ -43,7 +43,8 @@
       "WebFetch(domain:kanpai-plus.jp)",
       "Bash(start-admin.bat)",
       "Bash(npx vite:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "WebFetch(domain:sheve777.github.io)"
     ],
     "deny": []
   }
