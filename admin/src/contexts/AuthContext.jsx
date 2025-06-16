@@ -6,9 +6,9 @@ const AuthContext = createContext();
 // API設定 - 環境変数で動的に設定
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://kanpai-plus.jp/api/admin';
 
-// ローカル開発環境では認証をスキップ
-const SKIP_AUTH_LOCAL = import.meta.env.VITE_SKIP_AUTH_LOCAL === 'true' || 
-                       (!import.meta.env.VITE_API_BASE_URL && window.location.hostname === 'localhost');
+// ローカル開発環境では認証をスキップ（強制的にスキップ）
+const SKIP_AUTH_LOCAL = window.location.hostname === 'localhost' || 
+                       import.meta.env.VITE_SKIP_AUTH_LOCAL === 'true';
 
 // Axiosインスタンス作成
 const api = axios.create({

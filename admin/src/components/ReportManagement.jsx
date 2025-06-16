@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import ReportManagementDetail from './ReportManagementDetail';
 import {
   FileText,
   Calendar,
@@ -245,15 +246,12 @@ const ReportManagement = () => {
   }
 
   if (selectedStore) {
-    // 詳細画面をインポートして表示
-    const ReportManagementDetail = React.lazy(() => import('./ReportManagementDetail'));
+    // 詳細画面を表示
     return (
-      <React.Suspense fallback={<div>読み込み中...</div>}>
-        <ReportManagementDetail 
-          storeId={selectedStore} 
-          onBack={() => setSelectedStore(null)} 
-        />
-      </React.Suspense>
+      <ReportManagementDetail 
+        storeId={selectedStore} 
+        onBack={() => setSelectedStore(null)} 
+      />
     );
   }
 
@@ -300,46 +298,179 @@ const ReportManagement = () => {
       </div>
 
       {/* 統計カード（横一列） */}
-      <div className="report-stats-bar">
-        <div className="stats-summary">
-          <span className="stats-title">📊 レポート状況:</span>
-          <div className="stats-inline">
-            <div className="stat-item total">
-              <FileText size={16} />
-              <span className="stat-label">総店舗</span>
-              <span className="stat-value">{reportStats.total}</span>
+      <div 
+        className="report-stats-bar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 24px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          border: '1px solid #e2e8f0'
+        }}
+      >
+        <div 
+          className="stats-container"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '32px',
+            flex: 1
+          }}
+        >
+          <div className="stats-title-section">
+            <span 
+              className="stats-title"
+              style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#1e293b'
+              }}
+            >
+              📊 レポート状況
+            </span>
+          </div>
+          
+          <div 
+            className="stats-items"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '24px'
+            }}
+          >
+            <div 
+              className="stat-item total"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FileText size={18} style={{ color: '#64748b' }} />
+              <div className="stat-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span className="stat-value" style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>
+                  {reportStats.total}
+                </span>
+                <span className="stat-label" style={{ fontSize: '12px', color: '#64748b' }}>
+                  総店舗
+                </span>
+              </div>
             </div>
-            <div className="stat-divider">|</div>
-            <div className="stat-item sent">
-              <CheckCircle size={16} />
-              <span className="stat-label">配信済み</span>
-              <span className="stat-value">{reportStats.sent}</span>
+            
+            <div style={{ width: '1px', height: '32px', backgroundColor: '#e2e8f0' }}></div>
+            
+            <div 
+              className="stat-item sent"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <CheckCircle size={18} style={{ color: '#10b981' }} />
+              <div className="stat-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span className="stat-value" style={{ fontSize: '20px', fontWeight: '700', color: '#10b981' }}>
+                  {reportStats.sent}
+                </span>
+                <span className="stat-label" style={{ fontSize: '12px', color: '#64748b' }}>
+                  配信済み
+                </span>
+              </div>
             </div>
-            <div className="stat-divider">|</div>
-            <div className="stat-item generated">
-              <Clock size={16} />
-              <span className="stat-label">未配信</span>
-              <span className="stat-value">{reportStats.generated}</span>
+            
+            <div style={{ width: '1px', height: '32px', backgroundColor: '#e2e8f0' }}></div>
+            
+            <div 
+              className="stat-item generated"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Clock size={18} style={{ color: '#f59e0b' }} />
+              <div className="stat-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span className="stat-value" style={{ fontSize: '20px', fontWeight: '700', color: '#f59e0b' }}>
+                  {reportStats.generated}
+                </span>
+                <span className="stat-label" style={{ fontSize: '12px', color: '#64748b' }}>
+                  未配信
+                </span>
+              </div>
             </div>
-            <div className="stat-divider">|</div>
-            <div className="stat-item none">
-              <AlertTriangle size={16} />
-              <span className="stat-label">未生成</span>
-              <span className="stat-value">{reportStats.none}</span>
+            
+            <div style={{ width: '1px', height: '32px', backgroundColor: '#e2e8f0' }}></div>
+            
+            <div 
+              className="stat-item none"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+              <div className="stat-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span className="stat-value" style={{ fontSize: '20px', fontWeight: '700', color: '#ef4444' }}>
+                  {reportStats.none}
+                </span>
+                <span className="stat-label" style={{ fontSize: '12px', color: '#64748b' }}>
+                  未生成
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="completion-rate">
-          <span className="completion-label">完了率:</span>
-          <div className="completion-bar">
+        
+        <div 
+          className="completion-section"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            minWidth: '200px'
+          }}
+        >
+          <div className="completion-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <span className="completion-label" style={{ fontSize: '12px', color: '#64748b' }}>
+              完了率
+            </span>
+            <span 
+              className="completion-percentage"
+              style={{ 
+                fontSize: '18px', 
+                fontWeight: '700', 
+                color: reportStats.sent / reportStats.total > 0.8 ? '#10b981' : 
+                       reportStats.sent / reportStats.total > 0.5 ? '#f59e0b' : '#ef4444'
+              }}
+            >
+              {Math.round(reportStats.sent / reportStats.total * 100)}%
+            </span>
+          </div>
+          <div 
+            className="completion-bar"
+            style={{
+              width: '100px',
+              height: '8px',
+              backgroundColor: '#e2e8f0',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}
+          >
             <div 
               className="completion-fill"
-              style={{ width: `${(reportStats.sent / reportStats.total * 100)}%` }}
+              style={{ 
+                height: '100%',
+                backgroundColor: reportStats.sent / reportStats.total > 0.8 ? '#10b981' : 
+                                reportStats.sent / reportStats.total > 0.5 ? '#f59e0b' : '#ef4444',
+                width: `${(reportStats.sent / reportStats.total * 100)}%`,
+                transition: 'width 0.3s ease'
+              }}
             ></div>
           </div>
-          <span className="completion-percentage">
-            {Math.round(reportStats.sent / reportStats.total * 100)}%
-          </span>
         </div>
       </div>
 

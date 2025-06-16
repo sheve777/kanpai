@@ -15,7 +15,10 @@ import './App.css';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
-  if (loading) {
+  // ローカル環境では認証をスキップ
+  const isLocalhost = window.location.hostname === 'localhost';
+  
+  if (loading && !isLocalhost) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -24,11 +27,13 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // ローカル環境または認証済みの場合はアクセス許可
+  return (isAuthenticated || isLocalhost) ? children : <Navigate to="/login" />;
 };
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const isLocalhost = window.location.hostname === 'localhost';
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -37,7 +42,7 @@ function AppContent() {
           <Route 
             path="/login" 
             element={
-              isAuthenticated ? <Navigate to="/" /> : <LoginPage />
+              (isAuthenticated || isLocalhost) ? <Navigate to="/" /> : <LoginPage />
             } 
           />
           <Route 

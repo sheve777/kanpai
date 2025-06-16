@@ -13,7 +13,8 @@ import {
   ArrowDown,
   Filter,
   Download,
-  FileText
+  FileText,
+  Store
 } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart as RePieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -162,206 +163,73 @@ const RevenueManagement = () => {
         </div>
       </div>
 
-      {/* KPIカード */}
-      <div className="kpi-cards">
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <DollarSign size={24} />
-            <span className="kpi-label">総収益</span>
+      {/* 収益サマリー（横一列） */}
+      <div className="revenue-summary-bar">
+        <div className="summary-container">
+          <div className="summary-title">💰 本月の収益サマリー</div>
+          <div className="summary-stats">
+            <div className="summary-stat-item">
+              <DollarSign size={18} style={{ color: '#10b981' }} />
+              <div className="stat-content">
+                <span className="stat-value">{formatCurrency(kpiSummary.totalRevenue)}</span>
+                <span className="stat-label">総収益</span>
+              </div>
+              <div className="stat-trend positive">
+                <ArrowUp size={12} />
+                <span>{formatPercentage(kpiSummary.growthRate)}</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <TrendingUp size={18} style={{ color: '#3b82f6' }} />
+              <div className="stat-content">
+                <span className="stat-value">{formatCurrency(kpiSummary.totalMRR)}</span>
+                <span className="stat-label">MRR</span>
+              </div>
+              <div className="stat-trend positive">
+                <ArrowUp size={12} />
+                <span>{formatPercentage(5.2)}</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <Users size={18} style={{ color: '#f59e0b' }} />
+              <div className="stat-content">
+                <span className="stat-value">{kpiSummary.activeStores}</span>
+                <span className="stat-label">アクティブ店舗</span>
+              </div>
+              <div className="stat-trend positive">
+                <ArrowUp size={12} />
+                <span>+2店舗</span>
+              </div>
+            </div>
+            
+            <div className="summary-stat-item">
+              <CreditCard size={18} style={{ color: '#8b5cf6' }} />
+              <div className="stat-content">
+                <span className="stat-value">{formatCurrency(kpiSummary.avgARPU)}</span>
+                <span className="stat-label">ARPU</span>
+              </div>
+              <div className="stat-trend negative">
+                <ArrowDown size={12} />
+                <span>{formatPercentage(-1.8)}</span>
+              </div>
+            </div>
           </div>
-          <div className="kpi-value">{formatCurrency(kpiSummary.totalRevenue)}</div>
-          <div className="kpi-change positive">
-            <ArrowUp size={16} />
-            {formatPercentage(kpiSummary.growthRate)}
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <TrendingUp size={24} />
-            <span className="kpi-label">MRR</span>
-          </div>
-          <div className="kpi-value">{formatCurrency(kpiSummary.totalMRR)}</div>
-          <div className="kpi-change positive">
-            <ArrowUp size={16} />
-            {formatPercentage(5.2)}
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <Users size={24} />
-            <span className="kpi-label">アクティブ店舗</span>
-          </div>
-          <div className="kpi-value">{kpiSummary.activeStores}店舗</div>
-          <div className="kpi-change positive">
-            <ArrowUp size={16} />
-            +2店舗
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <CreditCard size={24} />
-            <span className="kpi-label">ARPU</span>
-          </div>
-          <div className="kpi-value">{formatCurrency(kpiSummary.avgARPU)}</div>
-          <div className="kpi-change negative">
-            <ArrowDown size={16} />
-            {formatPercentage(-1.8)}
-          </div>
-        </div>
-      </div>
-
-      {/* 収益推移グラフ */}
-      <div className="chart-container">
-        <div className="chart-header">
-          <h2>月次収益推移</h2>
-          <div className="chart-legend">
-            <span className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#3b82f6' }}></span>
-              総収益
-            </span>
-            <span className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#10b981' }}></span>
-              MRR
+          <div className="summary-actions">
+            <span className="update-info">
+              <Calendar size={14} />
+              {selectedYear}年{selectedPeriod === 'month' ? '月次' : selectedPeriod === 'quarter' ? '四半期' : '年次'}データ
             </span>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={monthlyRevenue}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(value) => formatCurrency(value)} />
-            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} />
-            <Line type="monotone" dataKey="mrr" stroke="#10b981" strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
       </div>
 
-      {/* 詳細データテーブル */}
-      <div className="revenue-tables-section">
-        <div className="tables-row">
-          {/* プラン別収益テーブル */}
-          <div className="table-container half">
-            <div className="table-header">
-              <h2>📊 プラン別収益詳細</h2>
-            </div>
-            <table className="revenue-table">
-              <thead>
-                <tr>
-                  <th>プラン</th>
-                  <th>店舗数</th>
-                  <th>収益</th>
-                  <th>平均単価</th>
-                  <th>構成比</th>
-                </tr>
-              </thead>
-              <tbody>
-                {planRevenue.map((plan) => {
-                  const totalRevenue = planRevenue.reduce((sum, p) => sum + p.value, 0);
-                  const percentage = ((plan.value / totalRevenue) * 100).toFixed(1);
-                  const avgPrice = Math.round(plan.value / plan.stores);
-                  
-                  return (
-                    <tr key={plan.name}>
-                      <td className="plan-name-cell">
-                        <div className="plan-indicator">
-                          <div className="plan-color" style={{ backgroundColor: plan.color }}></div>
-                          <span>{plan.name}</span>
-                        </div>
-                      </td>
-                      <td className="numeric-cell">{plan.stores}店舗</td>
-                      <td className="revenue-cell">{formatCurrency(plan.value)}</td>
-                      <td className="numeric-cell">{formatCurrency(avgPrice)}</td>
-                      <td className="percentage-cell">
-                        <div className="percentage-bar">
-                          <div 
-                            className="percentage-fill"
-                            style={{ 
-                              width: `${percentage}%`, 
-                              backgroundColor: plan.color 
-                            }}
-                          />
-                          <span className="percentage-text">{percentage}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* 店舗別収益テーブル */}
-          <div className="table-container half">
-            <div className="table-header">
-              <h2>🏆 店舗別収益ランキング</h2>
-            </div>
-            <table className="revenue-table">
-              <thead>
-                <tr>
-                  <th>順位</th>
-                  <th>店舗名</th>
-                  <th>収益</th>
-                  <th>成長率</th>
-                  <th>パフォーマンス</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storeRanking.map((store, index) => (
-                  <tr key={store.name}>
-                    <td className="rank-cell">
-                      <div className={`rank-badge rank-${index + 1}`}>
-                        {index + 1}
-                      </div>
-                    </td>
-                    <td className="store-name-cell">
-                      <div className="store-name-content">
-                        <span className="store-name">{store.name}</span>
-                      </div>
-                    </td>
-                    <td className="revenue-cell">{formatCurrency(store.revenue)}</td>
-                    <td className="growth-cell">
-                      <div className={`growth-indicator ${store.growth > 0 ? 'positive' : 'negative'}`}>
-                        {store.growth > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                        <span>{formatPercentage(Math.abs(store.growth))}</span>
-                      </div>
-                    </td>
-                    <td className="performance-cell">
-                      <div className="performance-bar">
-                        <div 
-                          className="performance-fill"
-                          style={{ 
-                            width: `${(store.revenue / storeRanking[0].revenue) * 100}%`,
-                            backgroundColor: store.growth > 10 ? '#10b981' : 
-                                           store.growth > 0 ? '#f59e0b' : '#ef4444'
-                          }}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* 月次データテーブル */}
-      <div className="monthly-data-section">
-        <div className="table-header">
-          <h2>📅 月次収益データ</h2>
-          <div className="table-actions">
-            <button className="btn-sm">
-              <Download size={14} />
-              CSV出力
-            </button>
-          </div>
-        </div>
-        <div className="monthly-table-container">
-          <table className="monthly-revenue-table">
+      {/* 月次収益データテーブル */}
+      <div className="monthly-revenue-section">
+        <h2>📈 月次収益データ</h2>
+        <div className="table-container">
+          <table className="revenue-table">
             <thead>
               <tr>
                 <th>月</th>
@@ -370,7 +238,7 @@ const RevenueManagement = () => {
                 <th>ARPU</th>
                 <th>店舗数</th>
                 <th>前月比</th>
-                <th>トレンド</th>
+                <th>成長率</th>
               </tr>
             </thead>
             <tbody>
@@ -381,130 +249,166 @@ const RevenueManagement = () => {
                 
                 return (
                   <tr key={month.month}>
-                    <td className="month-cell">
-                      <strong>{month.month}</strong>
+                    <td>
+                      <span className="month-badge">{month.month}</span>
                     </td>
-                    <td className="revenue-cell">
-                      <span className="main-value">{formatCurrency(month.revenue)}</span>
+                    <td>
+                      <span className="revenue-value">{formatCurrency(month.revenue)}</span>
                     </td>
-                    <td className="mrr-cell">
+                    <td>
                       <span className="mrr-value">{formatCurrency(month.mrr)}</span>
                     </td>
-                    <td className="arpu-cell">
+                    <td>
                       <span className="arpu-value">{formatCurrency(month.arpu)}</span>
                     </td>
-                    <td className="stores-cell">
-                      <span className="stores-count">{month.stores}店舗</span>
+                    <td>
+                      <span className="store-count">{month.stores}店舗</span>
                     </td>
-                    <td className="growth-cell">
+                    <td>
                       {prevMonth && (
                         <div className={`growth-indicator ${growth > 0 ? 'positive' : 'negative'}`}>
-                          {growth > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                          {growth > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                           <span>{formatPercentage(Math.abs(growth))}</span>
                         </div>
                       )}
                     </td>
-                    <td className="trend-cell">
-                      <div className="mini-chart">
-                        {/* 簡易トレンドインジケーター */}
-                        <div className={`trend-indicator ${growth > 5 ? 'strong-up' : growth > 0 ? 'up' : growth > -5 ? 'down' : 'strong-down'}`}>
-                          {growth > 5 ? '📈' : growth > 0 ? '↗️' : growth > -5 ? '↘️' : '📉'}
-                        </div>
+                    <td>
+                      <div className={`trend-indicator ${growth > 5 ? 'strong-up' : growth > 0 ? 'up' : growth > -5 ? 'down' : 'strong-down'}`}>
+                        {growth > 5 ? '📈' : growth > 0 ? '↗️' : growth > -5 ? '↘️' : '📉'}
                       </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-            <tfoot>
-              <tr className="summary-row">
-                <td><strong>合計</strong></td>
-                <td className="revenue-cell">
-                  <strong>{formatCurrency(monthlyRevenue.reduce((sum, m) => sum + m.revenue, 0))}</strong>
-                </td>
-                <td className="mrr-cell">
-                  <strong>{formatCurrency(monthlyRevenue.reduce((sum, m) => sum + m.mrr, 0))}</strong>
-                </td>
-                <td className="arpu-cell">
-                  <strong>{formatCurrency(Math.round(monthlyRevenue.reduce((sum, m) => sum + m.arpu, 0) / monthlyRevenue.length))}</strong>
-                </td>
-                <td className="stores-cell">
-                  <strong>{Math.max(...monthlyRevenue.map(m => m.stores))}店舗</strong>
-                </td>
-                <td colSpan="2" className="summary-note">
-                  <small>年間平均成長率: {formatPercentage(kpiSummary.growthRate)}</small>
-                </td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>
 
-      {/* 予測・分析セクション */}
-      <div className="analysis-section">
-        <h2>収益分析と予測</h2>
-        <div className="analysis-cards">
-          <div className="analysis-card">
-            <h3>成長率分析</h3>
-            <div className="metric-row">
-              <span>前月比成長率</span>
-              <span className="value positive">{formatPercentage(kpiSummary.growthRate)}</span>
-            </div>
-            <div className="metric-row">
-              <span>四半期成長率</span>
-              <span className="value positive">{formatPercentage(15.3)}</span>
-            </div>
-            <div className="metric-row">
-              <span>年間成長率</span>
-              <span className="value positive">{formatPercentage(42.7)}</span>
-            </div>
-          </div>
-
-          <div className="analysis-card">
-            <h3>顧客維持率</h3>
-            <div className="metric-row">
-              <span>継続率</span>
-              <span className="value">{(100 - kpiSummary.churnRate).toFixed(1)}%</span>
-            </div>
-            <div className="metric-row">
-              <span>チャーン率</span>
-              <span className="value negative">{kpiSummary.churnRate}%</span>
-            </div>
-            <div className="metric-row">
-              <span>LTV/CAC</span>
-              <span className="value positive">3.2x</span>
-            </div>
-          </div>
-
-          <div className="analysis-card">
-            <h3>来月の予測</h3>
-            <div className="metric-row">
-              <span>予測MRR</span>
-              <span className="value">{formatCurrency(kpiSummary.totalMRR * 1.085)}</span>
-            </div>
-            <div className="metric-row">
-              <span>新規獲得目標</span>
-              <span className="value">3店舗</span>
-            </div>
-            <div className="metric-row">
-              <span>予測総収益</span>
-              <span className="value">{formatCurrency(1234000)}</span>
-            </div>
-          </div>
+      {/* プラン別収益テーブル */}
+      <div className="plan-revenue-section">
+        <h2>📊 プラン別収益詳細</h2>
+        <div className="table-container">
+          <table className="revenue-table">
+            <thead>
+              <tr>
+                <th>プラン</th>
+                <th>店舗数</th>
+                <th>収益</th>
+                <th>平均単価</th>
+                <th>構成比</th>
+                <th>アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              {planRevenue.map((plan) => {
+                const totalRevenue = planRevenue.reduce((sum, p) => sum + p.value, 0);
+                const percentage = ((plan.value / totalRevenue) * 100).toFixed(1);
+                const avgPrice = Math.round(plan.value / plan.stores);
+                
+                return (
+                  <tr key={plan.name}>
+                    <td>
+                      <div className="plan-name-cell">
+                        <div className="plan-color" style={{ backgroundColor: plan.color }}></div>
+                        <span>{plan.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="store-count">{plan.stores}店舗</span>
+                    </td>
+                    <td>
+                      <span className="revenue-value">{formatCurrency(plan.value)}</span>
+                    </td>
+                    <td>
+                      <span className="price-value">{formatCurrency(avgPrice)}</span>
+                    </td>
+                    <td>
+                      <div className="percentage-display">
+                        <span className="percentage-value">{percentage}%</span>
+                        <div className="percentage-bar">
+                          <div 
+                            className="percentage-fill"
+                            style={{ 
+                              width: `${percentage}%`, 
+                              backgroundColor: plan.color 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <button className="btn-sm primary">詳細</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* アクションボタン */}
-      <div className="action-buttons">
-        <button className="btn-primary">
-          <FileText size={18} />
-          月次収益レポート生成
-        </button>
-        <button className="btn-secondary">
-          <BarChart3 size={18} />
-          詳細分析画面へ
-        </button>
+      {/* 店舗別収益ランキングテーブル */}
+      <div className="store-ranking-section">
+        <h2>🏆 店舗別収益ランキング</h2>
+        <div className="table-container">
+          <table className="revenue-table">
+            <thead>
+              <tr>
+                <th>順位</th>
+                <th>店舗名</th>
+                <th>収益</th>
+                <th>成長率</th>
+                <th>パフォーマンス</th>
+                <th>アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              {storeRanking.map((store, index) => (
+                <tr key={store.name}>
+                  <td>
+                    <div className={`rank-badge rank-${index + 1}`}>
+                      {index + 1}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="store-name-cell">
+                      <Store size={16} />
+                      <span>{store.name}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="revenue-value">{formatCurrency(store.revenue)}</span>
+                  </td>
+                  <td>
+                    <div className={`growth-indicator ${store.growth > 0 ? 'positive' : 'negative'}`}>
+                      {store.growth > 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                      <span>{formatPercentage(Math.abs(store.growth))}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="performance-bar">
+                      <div 
+                        className="performance-fill"
+                        style={{ 
+                          width: `${(store.revenue / storeRanking[0].revenue) * 100}%`,
+                          backgroundColor: store.growth > 10 ? '#10b981' : 
+                                         store.growth > 0 ? '#f59e0b' : '#ef4444'
+                        }}
+                      />
+                      <span className="performance-text">{Math.round((store.revenue / storeRanking[0].revenue) * 100)}%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button className="btn-sm secondary">詳細</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+
     </div>
   );
 };

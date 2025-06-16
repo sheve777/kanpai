@@ -41,7 +41,9 @@
       "Bash(chmod:*)",
       "Bash(touch:*)",
       "WebFetch(domain:kanpai-plus.jp)",
-      "Bash(start-admin.bat)"
+      "Bash(start-admin.bat)",
+      "Bash(npx vite:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": []
   }

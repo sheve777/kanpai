@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import StoreWizard from './StoreWizard';
 import StoreDetailModal from './StoreDetailModal';
+import StoreDetail from './StoreDetail';
 import {
   Search,
   Filter,
@@ -29,6 +30,7 @@ const StoreManagement = () => {
   const [showStoreWizard, setShowStoreWizard] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
   const [detailModalMode, setDetailModalMode] = useState('view');
+  const [showDetailPage, setShowDetailPage] = useState(false);
 
   useEffect(() => {
     fetchStores();
@@ -126,12 +128,12 @@ const StoreManagement = () => {
 
   const handleViewStore = (store) => {
     setSelectedStore(store.id);
-    setDetailModalMode('view');
+    setShowDetailPage(true);
   };
 
   const handleEditStore = (store) => {
     setSelectedStore(store.id);
-    setDetailModalMode('edit');
+    setShowDetailPage(true);
   };
 
   const handleDeleteStore = async (store) => {
@@ -226,6 +228,20 @@ const StoreManagement = () => {
         <div className="loading-spinner"></div>
         <p>店舗情報を読み込み中...</p>
       </div>
+    );
+  }
+
+  // Show detail page if selected
+  if (showDetailPage && selectedStore) {
+    return (
+      <StoreDetail 
+        storeId={selectedStore}
+        onBack={() => {
+          setShowDetailPage(false);
+          setSelectedStore(null);
+          fetchStores(); // Refresh the store list
+        }}
+      />
     );
   }
 

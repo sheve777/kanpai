@@ -245,106 +245,171 @@ const BackupExport = () => {
 
       {/* バックアップ作成セクション */}
       <div className="backup-create-section">
-        <h2>新規バックアップ作成</h2>
-        <div className="backup-form">
-          <div className="form-group">
-            <label>バックアップタイプ</label>
-            <div className="backup-types">
-              <label className="backup-type-option">
-                <input
-                  type="radio"
-                  name="exportType"
-                  value="all"
-                  checked={exportType === 'all'}
-                  onChange={(e) => setExportType(e.target.value)}
-                />
-                <div className="option-content">
-                  <Database size={20} />
-                  <span>全店舗データ</span>
-                  <small>すべての店舗の完全なデータ</small>
-                </div>
-              </label>
-              
-              <label className="backup-type-option">
-                <input
-                  type="radio"
-                  name="exportType"
-                  value="settings"
-                  checked={exportType === 'settings'}
-                  onChange={(e) => setExportType(e.target.value)}
-                />
-                <div className="option-content">
-                  <Settings size={20} />
-                  <span>設定データのみ</span>
-                  <small>APIキーや設定情報のみ</small>
-                </div>
-              </label>
-              
-              <label className="backup-type-option">
-                <input
-                  type="radio"
-                  name="exportType"
-                  value="selective"
-                  checked={exportType === 'selective'}
-                  onChange={(e) => setExportType(e.target.value)}
-                />
-                <div className="option-content">
-                  <Archive size={20} />
-                  <span>店舗選択</span>
-                  <small>特定の店舗のみ</small>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {exportType === 'selective' && (
-            <div className="form-group">
-              <label>対象店舗</label>
-              <div className="store-selection">
-                {['居酒屋 花まる', '海鮮居酒屋 大漁丸', '創作和食 風花'].map((store, index) => (
-                  <label key={index} className="store-checkbox">
+        <h2>📦 新規バックアップ作成</h2>
+        <div className="backup-form-table">
+          <table className="backup-config-table">
+            <thead>
+              <tr>
+                <th>バックアップタイプ</th>
+                <th>対象データ</th>
+                <th>推定サイズ</th>
+                <th>対象店舗</th>
+                <th>アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className={exportType === 'all' ? 'selected' : ''} onClick={() => setExportType('all')}>
+                <td>
+                  <div className="backup-type-cell">
                     <input
-                      type="checkbox"
-                      checked={selectedStores.includes(index)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedStores([...selectedStores, index]);
-                        } else {
-                          setSelectedStores(selectedStores.filter(s => s !== index));
-                        }
-                      }}
+                      type="radio"
+                      name="exportType"
+                      value="all"
+                      checked={exportType === 'all'}
+                      onChange={(e) => setExportType(e.target.value)}
                     />
-                    <span>{store}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button
-            className="btn-primary"
-            onClick={handleCreateBackup}
-            disabled={creating || (exportType === 'selective' && selectedStores.length === 0)}
-          >
-            {creating ? (
-              <>
-                <RefreshCw size={18} className="spin" />
-                作成中...
-              </>
-            ) : (
-              <>
-                <Download size={18} />
-                バックアップ作成
-              </>
-            )}
-          </button>
+                    <Database size={16} />
+                    <span>全店舗データ</span>
+                  </div>
+                </td>
+                <td>すべての店舗の完全なデータ（設定・予約・メニュー・ユーザー）</td>
+                <td><span className="size-estimate">~45-60 MB</span></td>
+                <td><span className="store-count">全5店舗</span></td>
+                <td>
+                  {exportType === 'all' && (
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={handleCreateBackup}
+                      disabled={creating}
+                    >
+                      {creating ? (
+                        <>
+                          <RefreshCw size={14} className="spin" />
+                          作成中...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={14} />
+                          作成
+                        </>
+                      )}
+                    </button>
+                  )}
+                </td>
+              </tr>
+              
+              <tr className={exportType === 'settings' ? 'selected' : ''} onClick={() => setExportType('settings')}>
+                <td>
+                  <div className="backup-type-cell">
+                    <input
+                      type="radio"
+                      name="exportType"
+                      value="settings"
+                      checked={exportType === 'settings'}
+                      onChange={(e) => setExportType(e.target.value)}
+                    />
+                    <Settings size={16} />
+                    <span>設定データのみ</span>
+                  </div>
+                </td>
+                <td>APIキー・店舗設定・LINE設定・Google設定のみ</td>
+                <td><span className="size-estimate">~2-5 MB</span></td>
+                <td><span className="store-count">全5店舗</span></td>
+                <td>
+                  {exportType === 'settings' && (
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={handleCreateBackup}
+                      disabled={creating}
+                    >
+                      {creating ? (
+                        <>
+                          <RefreshCw size={14} className="spin" />
+                          作成中...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={14} />
+                          作成
+                        </>
+                      )}
+                    </button>
+                  )}
+                </td>
+              </tr>
+              
+              <tr className={exportType === 'selective' ? 'selected' : ''} onClick={() => setExportType('selective')}>
+                <td>
+                  <div className="backup-type-cell">
+                    <input
+                      type="radio"
+                      name="exportType"
+                      value="selective"
+                      checked={exportType === 'selective'}
+                      onChange={(e) => setExportType(e.target.value)}
+                    />
+                    <Archive size={16} />
+                    <span>店舗選択</span>
+                  </div>
+                </td>
+                <td>選択した店舗の完全データ</td>
+                <td><span className="size-estimate">~{selectedStores.length * 10}-{selectedStores.length * 15} MB</span></td>
+                <td>
+                  {exportType === 'selective' ? (
+                    <div className="store-selection-inline">
+                      {['居酒屋 花まる', '海鮮居酒屋 大漁丸', '創作和食 風花'].map((store, index) => (
+                        <label key={index} className="store-checkbox-inline">
+                          <input
+                            type="checkbox"
+                            checked={selectedStores.includes(index)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              if (e.target.checked) {
+                                setSelectedStores([...selectedStores, index]);
+                              } else {
+                                setSelectedStores(selectedStores.filter(s => s !== index));
+                              }
+                            }}
+                          />
+                          <span>{store}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="store-count">選択可能</span>
+                  )}
+                </td>
+                <td>
+                  {exportType === 'selective' && (
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={handleCreateBackup}
+                      disabled={creating || selectedStores.length === 0}
+                    >
+                      {creating ? (
+                        <>
+                          <RefreshCw size={14} className="spin" />
+                          作成中...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={14} />
+                          作成
+                        </>
+                      )}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* バックアップ一覧 */}
       <div className="backup-list-section">
         <div className="section-header">
-          <h2>バックアップ履歴</h2>
+          <h2>📋 バックアップ履歴</h2>
           <button
             className="btn-secondary"
             onClick={fetchBackups}
@@ -355,141 +420,240 @@ const BackupExport = () => {
           </button>
         </div>
 
-        <div className="backup-list">
-          {backups.map(backup => {
-            const TypeIcon = getTypeIcon(backup.type);
-            
-            return (
-              <div key={backup.id} className="backup-item">
-                <div className="backup-info">
-                  <div className="backup-icon">
-                    <TypeIcon size={24} />
-                  </div>
-                  <div className="backup-details">
-                    <h3>{backup.name}</h3>
-                    <div className="backup-meta">
-                      <span className="backup-size">{backup.size}</span>
-                      <span className="backup-stores">{backup.stores}店舗</span>
-                      <span className="backup-date">
-                        <Calendar size={14} />
-                        {new Date(backup.createdAt).toLocaleDateString('ja-JP')}
+        <div className="backup-table-container">
+          <table className="backup-table">
+            <thead>
+              <tr>
+                <th>バックアップ名</th>
+                <th>タイプ</th>
+                <th>ファイルサイズ</th>
+                <th>対象店舗</th>
+                <th>作成日時</th>
+                <th>ステータス</th>
+                <th>アクション</th>
+              </tr>
+            </thead>
+            <tbody>
+              {backups.map(backup => {
+                const TypeIcon = getTypeIcon(backup.type);
+                
+                return (
+                  <tr key={backup.id}>
+                    <td className="backup-name-cell">
+                      <div className="backup-name-content">
+                        <TypeIcon size={16} />
+                        <span className="backup-name">{backup.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="backup-type-badge">{getBackupTypeName(backup.type)}</span>
+                    </td>
+                    <td>
+                      <span className="file-size">{backup.size}</span>
+                    </td>
+                    <td>
+                      <span className="store-count-badge">{backup.stores}店舗</span>
+                    </td>
+                    <td>
+                      <div className="date-cell">
+                        <Calendar size={12} />
+                        <span>{new Date(backup.createdAt).toLocaleDateString('ja-JP')}</span>
+                        <small>{new Date(backup.createdAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge status-completed">
+                        <CheckCircle size={14} />
+                        完了
                       </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="backup-status">
-                  <span className="status-badge status-completed">
-                    <CheckCircle size={16} />
-                    完了
-                  </span>
-                </div>
-                
-                <div className="backup-actions">
-                  <button
-                    className="action-btn"
-                    onClick={() => handleDownloadBackup(backup)}
-                    title="ダウンロード"
-                  >
-                    <Download size={16} />
-                  </button>
-                  <button
-                    className="action-btn"
-                    onClick={() => handleRestoreBackup(backup)}
-                    disabled={restoring}
-                    title="復元"
-                  >
-                    <RefreshCw size={16} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                    <td>
+                      <div className="backup-actions">
+                        <button
+                          className="action-btn primary"
+                          onClick={() => handleDownloadBackup(backup)}
+                          title="ダウンロード"
+                        >
+                          <Download size={14} />
+                          DL
+                        </button>
+                        <button
+                          className="action-btn secondary"
+                          onClick={() => handleRestoreBackup(backup)}
+                          disabled={restoring}
+                          title="復元"
+                        >
+                          <RefreshCw size={14} />
+                          復元
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
           
           {backups.length === 0 && (
             <div className="empty-state">
               <HardDrive size={48} />
               <h3>バックアップがありません</h3>
-              <p>上のフォームから新しいバックアップを作成してください</p>
+              <p>上のテーブルから新しいバックアップを作成してください</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* インポートセクション */}
-      <div className="backup-import-section">
-        <h2>バックアップのインポート</h2>
-        <div className="import-area">
-          <div className="import-dropzone">
-            <Upload size={48} />
-            <h3>バックアップファイルをドロップ</h3>
-            <p>または</p>
-            <input
-              type="file"
-              accept=".zip,.json"
-              onChange={(e) => handleImportBackup(e.target.files[0])}
-              id="backup-file"
-              className="file-input"
-            />
-            <label htmlFor="backup-file" className="btn-secondary">
-              ファイルを選択
-            </label>
+      {/* インポート・自動バックアップ設定 */}
+      <div className="backup-settings-section">
+        <div className="settings-row">
+          {/* インポートセクション */}
+          <div className="import-section">
+            <h2>📤 バックアップインポート</h2>
+            <table className="import-table">
+              <thead>
+                <tr>
+                  <th>ファイル選択</th>
+                  <th>対応形式</th>
+                  <th>最大サイズ</th>
+                  <th>注意事項</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div className="file-upload-cell">
+                      <input
+                        type="file"
+                        accept=".zip,.json"
+                        onChange={(e) => handleImportBackup(e.target.files[0])}
+                        id="backup-file"
+                        className="file-input"
+                      />
+                      <label htmlFor="backup-file" className="btn-secondary btn-sm">
+                        <Upload size={14} />
+                        ファイル選択
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="format-list">
+                      <span className="format-badge">.zip</span>
+                      <span className="format-badge">.json</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="size-limit">100 MB</span>
+                  </td>
+                  <td>
+                    <div className="warning-cell">
+                      <AlertTriangle size={14} />
+                      <span>現在のデータが上書きされます</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          
-          <div className="import-warning">
-            <AlertTriangle size={20} />
-            <div>
-              <h4>⚠️ 注意事項</h4>
-              <ul>
-                <li>インポート時は現在のデータが上書きされます</li>
-                <li>事前に現在のデータのバックアップを作成することを推奨します</li>
-                <li>大きなファイルの場合、処理に時間がかかることがあります</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 自動バックアップ設定 */}
-      <div className="auto-backup-section">
-        <h2>自動バックアップ設定</h2>
-        <div className="auto-backup-config">
-          <div className="config-option">
-            <label className="checkbox-label">
-              <input type="checkbox" defaultChecked />
-              <span>自動バックアップを有効にする</span>
-            </label>
-          </div>
-          
-          <div className="config-grid">
-            <div className="config-group">
-              <label>実行頻度</label>
-              <select className="form-select">
-                <option value="daily">毎日</option>
-                <option value="weekly">毎週</option>
-                <option value="monthly">毎月</option>
-              </select>
-            </div>
+          {/* 自動バックアップ設定 */}
+          <div className="auto-backup-section">
+            <h2>⚙️ 自動バックアップ設定</h2>
+            <table className="auto-backup-table">
+              <thead>
+                <tr>
+                  <th>設定項目</th>
+                  <th>現在の値</th>
+                  <th>変更</th>
+                  <th>説明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div className="setting-name">
+                      <Shield size={16} />
+                      <span>自動バックアップ</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="status-badge status-active">有効</span>
+                  </td>
+                  <td>
+                    <label className="switch-label">
+                      <input type="checkbox" defaultChecked />
+                      <div className="switch-slider"></div>
+                    </label>
+                  </td>
+                  <td>定期的な自動バックアップの実行</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div className="setting-name">
+                      <Clock size={16} />
+                      <span>実行頻度</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="current-value">毎日</span>
+                  </td>
+                  <td>
+                    <select className="form-select compact">
+                      <option value="daily">毎日</option>
+                      <option value="weekly">毎週</option>
+                      <option value="monthly">毎月</option>
+                    </select>
+                  </td>
+                  <td>バックアップの実行間隔</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div className="setting-name">
+                      <Calendar size={16} />
+                      <span>実行時刻</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="current-value">03:00</span>
+                  </td>
+                  <td>
+                    <input type="time" defaultValue="03:00" className="form-input compact" />
+                  </td>
+                  <td>バックアップ開始時刻</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div className="setting-name">
+                      <Archive size={16} />
+                      <span>保存期間</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="current-value">30日</span>
+                  </td>
+                  <td>
+                    <select className="form-select compact">
+                      <option value="30">30日</option>
+                      <option value="90">90日</option>
+                      <option value="365">1年</option>
+                    </select>
+                  </td>
+                  <td>古いバックアップの自動削除</td>
+                </tr>
+              </tbody>
+            </table>
             
-            <div className="config-group">
-              <label>実行時刻</label>
-              <input type="time" defaultValue="03:00" className="form-input" />
-            </div>
-            
-            <div className="config-group">
-              <label>保存期間</label>
-              <select className="form-select">
-                <option value="30">30日</option>
-                <option value="90">90日</option>
-                <option value="365">1年</option>
-              </select>
+            <div className="settings-actions">
+              <button className="btn-primary">
+                <Shield size={18} />
+                設定を保存
+              </button>
+              <button className="btn-secondary">
+                <RefreshCw size={18} />
+                手動実行
+              </button>
             </div>
           </div>
-          
-          <button className="btn-primary">
-            <Shield size={18} />
-            自動バックアップ設定を保存
-          </button>
         </div>
       </div>
     </div>

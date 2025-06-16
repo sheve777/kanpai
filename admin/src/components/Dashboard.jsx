@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Store,
@@ -21,14 +22,16 @@ import {
   BookOpen,
   Database,
   Wifi,
-  WifiOff
+  WifiOff,
+  HardDrive
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import BookmarkManager from './BookmarkManager';
-import LayoutCustomizer from './LayoutCustomizer';
+// import BookmarkManager from './BookmarkManager';
+// import LayoutCustomizer from './LayoutCustomizer';
 
 const Dashboard = () => {
   const { api } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -171,6 +174,16 @@ const Dashboard = () => {
     ));
   };
 
+  const getColorByType = (type) => {
+    switch (type) {
+      case 'blue': return '#3b82f6';
+      case 'green': return '#10b981';
+      case 'orange': return '#f59e0b';
+      case 'purple': return '#8b5cf6';
+      default: return '#64748b';
+    }
+  };
+
   const statCards = [
     {
       id: 'total_stores',
@@ -258,110 +271,154 @@ const Dashboard = () => {
   };
 
   const renderDashboardContent = () => {
-    // レイアウトが設定されている場合は、それに従って表示
-    if (currentLayout) {
-      return currentLayout.sections
-        .filter(section => section.visible)
-        .sort((a, b) => a.order - b.order)
-        .map(section => renderSection(section));
-    }
-
     // デフォルトレイアウト
     return (
       <>
-        {/* Stats Cards */}
-        <div className="stats-grid">
-          {statCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div key={card.id} className={`stat-card ${card.color}`}>
-                <div className="stat-icon">
-                  <Icon size={24} />
-                </div>
-                <div className="stat-content">
-                  <div className="stat-label">{card.title}</div>
-                  <div className="stat-value">{card.value.toLocaleString()}</div>
-                  <div className={`stat-trend ${card.trendType}`}>
-                    {card.trendType === 'up' && <TrendingUp size={14} />}
-                    {card.trendType === 'down' && <TrendingDown size={14} />}
-                    <span>{card.trend}</span>
+        {/* 統計サマリー（横一列） */}
+        <div className="dashboard-summary-bar">
+          <div className="summary-container">
+            <div className="summary-title">📊 本日のサマリー</div>
+            <div className="summary-stats">
+              {statCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div key={card.id} className="summary-stat-item">
+                    <Icon size={18} style={{ color: getColorByType(card.color) }} />
+                    <div className="stat-content">
+                      <span className="stat-value">{card.value.toLocaleString()}</span>
+                      <span className="stat-label">{card.title}</span>
+                    </div>
+                    <div className={`stat-trend ${card.trendType}`}>
+                      {card.trendType === 'up' && <TrendingUp size={12} />}
+                      {card.trendType === 'down' && <TrendingDown size={12} />}
+                      <span>{card.trend}</span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+            <div className="summary-actions">
+              <span className="update-time">
+                <Clock size={14} />
+                {lastUpdated.toLocaleTimeString('ja-JP')}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* 新しいセクション群 */}
-        <div className="dashboard-grid">
-          {/* お気に入り店舗 */}
-          <div className="favorite-stores-section">
-            <h2>⭐ お気に入り店舗</h2>
-            <div className="favorite-stores-list">
-              {favoriteStores.map(store => (
-                <div key={store.id} className="favorite-store-card">
-                  <div className="store-info">
-                    <h4>{store.name}</h4>
-                    <span className={`status-badge ${store.status}`}>
-                      {store.status === 'healthy' ? <Wifi size={12} /> : <WifiOff size={12} />}
-                      {store.status === 'healthy' ? '正常' : '注意'}
-                    </span>
-                  </div>
-                  <div className="store-meta">
-                    最終レポート: {store.lastReport}
-                  </div>
-                  <button 
-                    className="btn-sm"
-                    onClick={() => window.location.href = '/stores'}
-                  >
-                    管理
-                  </button>
-                </div>
-              ))}
-              {favoriteStores.length === 0 && (
-                <div className="empty-favorites">
-                  <Star size={32} />
-                  <p>お気に入り店舗がありません</p>
-                  <button onClick={() => window.location.href = '/stores'}>
-                    店舗をお気に入りに追加
-                  </button>
-                </div>
-              )}
-            </div>
+        {/* お気に入り店舗テーブル */}
+        <div className="favorite-stores-section">
+          <h2>⭐ お気に入り店舗</h2>
+          <div className="table-container">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>店舗名</th>
+                  <th>ステータス</th>
+                  <th>最終レポート</th>
+                  <th>アクション</th>
+                </tr>
+              </thead>
+              <tbody>
+                {favoriteStores.map(store => (
+                  <tr key={store.id}>
+                    <td>
+                      <div className="store-name-cell">
+                        <Store size={16} />
+                        <span>{store.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${store.status}`}>
+                        {store.status === 'healthy' ? <Wifi size={12} /> : <WifiOff size={12} />}
+                        {store.status === 'healthy' ? '正常' : '注意'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="time-cell">{store.lastReport}</span>
+                    </td>
+                    <td>
+                      <button 
+                        className="btn-sm primary"
+                        onClick={() => navigate('/stores')}
+                      >
+                        管理
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {favoriteStores.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="empty-state-cell">
+                      <div className="empty-favorites">
+                        <Star size={32} />
+                        <p>お気に入り店舗がありません</p>
+                        <button onClick={() => window.location.href = '/stores'}>
+                          店舗をお気に入りに追加
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          {/* 今日やるべきこと */}
-          <div className="todo-section">
-            <h2>📋 今日やるべきこと</h2>
-            <div className="todo-list">
-              {todoList.map(todo => (
-                <div key={todo.id} className={`todo-item priority-${todo.priority}`}>
-                  <div className="todo-content">
-                    <span className="todo-task">{todo.task}</span>
-                    <span className="todo-time">
-                      <Clock size={12} />
-                      {todo.dueTime}
-                    </span>
-                  </div>
-                  <div className={`priority-badge ${todo.priority}`}>
-                    {todo.priority === 'high' && <Zap size={12} />}
-                    {todo.priority === 'medium' && <Target size={12} />}
-                    {todo.priority === 'low' && <BookOpen size={12} />}
-                  </div>
-                </div>
-              ))}
-              {todoList.length === 0 && (
-                <div className="empty-todos">
-                  <CheckCircle size={32} />
-                  <p>今日のタスクはすべて完了しています！</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ブックマーク・最近の操作 */}
-          <div className="bookmarks-section">
-            <BookmarkManager isWidget={true} />
+        {/* 今日やるべきことテーブル */}
+        <div className="todo-section">
+          <h2>📋 今日やるべきこと</h2>
+          <div className="table-container">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>タスク</th>
+                  <th>優先度</th>
+                  <th>期限</th>
+                  <th>アクション</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todoList.map(todo => (
+                  <tr key={todo.id} className={`todo-row priority-${todo.priority}`}>
+                    <td>
+                      <div className="task-cell">
+                        <span className="todo-task">{todo.task}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={`priority-badge ${todo.priority}`}>
+                        {todo.priority === 'high' && <Zap size={12} />}
+                        {todo.priority === 'medium' && <Target size={12} />}
+                        {todo.priority === 'low' && <BookOpen size={12} />}
+                        <span>{todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="time-cell">
+                        <Clock size={12} />
+                        <span>{todo.dueTime}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <button className="btn-sm secondary">
+                        完了
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {todoList.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="empty-state-cell">
+                      <div className="empty-todos">
+                        <CheckCircle size={32} />
+                        <p>今日のタスクはすべて完了しています！</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -401,81 +458,140 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 店舗別健康状態 */}
+        {/* 店舗別健康状態テーブル */}
         <div className="store-health-section">
           <h2>🏥 店舗別健康状態</h2>
-          <div className="store-health-grid">
-            {storeHealth.map(store => (
-              <div key={store.id} className={`store-health-card ${store.status}`}>
-                <div className="store-health-header">
-                  <h4>{store.name}</h4>
-                  <div className="store-actions">
-                    <button
-                      className={`favorite-btn ${store.isFavorite ? 'active' : ''}`}
-                      onClick={() => toggleFavoriteStore(store.id)}
-                    >
-                      <Heart size={16} fill={store.isFavorite ? 'currentColor' : 'none'} />
-                    </button>
-                    <span className={`status-indicator ${store.status}`}>
-                      {store.status === 'healthy' ? <Activity size={16} /> : <AlertTriangle size={16} />}
-                    </span>
-                  </div>
-                </div>
-                <div className="store-metrics">
-                  <div className="metric">
-                    <span>API呼び出し</span>
-                    <span>{store.apiCalls.toLocaleString()}</span>
-                  </div>
-                  <div className="metric">
-                    <span>エラー率</span>
-                    <span>{store.errorRate.toFixed(1)}%</span>
-                  </div>
-                  <div className="metric">
-                    <span>最終活動</span>
-                    <span>{new Date(store.lastActive).toLocaleTimeString('ja-JP')}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="table-container">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>店舗名</th>
+                  <th>ステータス</th>
+                  <th>API呼び出し</th>
+                  <th>エラー率</th>
+                  <th>最終活動</th>
+                  <th>お気に入り</th>
+                  <th>アクション</th>
+                </tr>
+              </thead>
+              <tbody>
+                {storeHealth.map(store => (
+                  <tr key={store.id} className={`store-health-row ${store.status}`}>
+                    <td>
+                      <div className="store-name-cell">
+                        <Store size={16} />
+                        <span>{store.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${store.status}`}>
+                        {store.status === 'healthy' ? <Activity size={16} /> : <AlertTriangle size={16} />}
+                        {store.status === 'healthy' ? '正常' : '注意'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="metric-value">{store.apiCalls.toLocaleString()}</span>
+                    </td>
+                    <td>
+                      <span className={`error-rate ${store.errorRate > 2 ? 'high' : 'normal'}`}>
+                        {store.errorRate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td>
+                      <div className="time-cell">
+                        <Clock size={12} />
+                        <span>{new Date(store.lastActive).toLocaleTimeString('ja-JP')}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        className={`favorite-btn ${store.isFavorite ? 'active' : ''}`}
+                        onClick={() => toggleFavoriteStore(store.id)}
+                      >
+                        <Heart size={16} fill={store.isFavorite ? 'currentColor' : 'none'} />
+                      </button>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="btn-sm primary" onClick={() => window.location.href = '/stores'}>
+                          詳細
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Alerts Section */}
+        {/* システム通知テーブル */}
         <div className="alerts-section">
           <h2>📋 システム通知</h2>
-          <div className="alerts-list">
-            {alerts.map((alert) => {
-              const Icon = alert.icon;
-              return (
-                <div key={alert.id} className={`alert-card ${alert.type}`}>
-                  <Icon className="alert-icon" size={20} />
-                  <div className="alert-content">
-                    <div className="alert-title">{alert.title}</div>
-                    <div className="alert-message">{alert.message}</div>
-                    <div className="alert-time">{alert.time}</div>
-                  </div>
-                  <button className="alert-action">対応</button>
-                </div>
-              );
-            })}
+          <div className="table-container">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>タイプ</th>
+                  <th>タイトル</th>
+                  <th>メッセージ</th>
+                  <th>時刻</th>
+                  <th>アクション</th>
+                </tr>
+              </thead>
+              <tbody>
+                {alerts.map((alert) => {
+                  const Icon = alert.icon;
+                  return (
+                    <tr key={alert.id} className={`alert-row ${alert.type}`}>
+                      <td>
+                        <div className={`alert-type-cell ${alert.type}`}>
+                          <Icon size={16} />
+                          <span>{alert.type === 'warning' ? '警告' : '情報'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="alert-title">{alert.title}</span>
+                      </td>
+                      <td>
+                        <span className="alert-message">{alert.message}</span>
+                      </td>
+                      <td>
+                        <div className="time-cell">
+                          <Clock size={12} />
+                          <span>{alert.time}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <button className="btn-sm secondary">対応</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="quick-actions">
+        {/* クイックアクション */}
+        <div className="quick-actions-section">
           <h2>🚀 クイックアクション</h2>
-          <div className="action-buttons">
-            <button className="action-btn primary" onClick={() => window.location.href = '/stores'}>
-              新店舗追加
+          <div className="action-grid">
+            <button className="action-card primary" onClick={() => window.location.href = '/stores'}>
+              <Store size={24} />
+              <span>新店舗追加</span>
             </button>
-            <button className="action-btn secondary" onClick={() => window.location.href = '/reports'}>
-              レポート一括生成
+            <button className="action-card secondary" onClick={() => navigate('/reports')}>
+              <FileText size={24} />
+              <span>レポート一括生成</span>
             </button>
-            <button className="action-btn secondary" onClick={() => window.location.href = '/backup'}>
-              バックアップ作成
+            <button className="action-card secondary" onClick={() => navigate('/backup')}>
+              <HardDrive size={24} />
+              <span>バックアップ作成</span>
             </button>
-            <button className="action-btn secondary" onClick={() => window.location.href = '/revenue'}>
-              収益分析表示
+            <button className="action-card secondary" onClick={() => navigate('/revenue')}>
+              <TrendingUp size={24} />
+              <span>収益分析表示</span>
             </button>
           </div>
         </div>
@@ -483,16 +599,14 @@ const Dashboard = () => {
     );
   };
 
-  const renderSection = (section) => {
-    // セクションタイプに応じたコンポーネントを返す
-    // 実際の実装では、sectionの設定に基づいてコンポーネントをレンダリング
-    return (
-      <div key={section.id} className={`dashboard-section ${section.size}`}>
-        <h2>{section.title}</h2>
-        <div>セクション内容: {section.type}</div>
-      </div>
-    );
-  };
+  // const renderSection = (section) => {
+  //   return (
+  //     <div key={section.id} className={`dashboard-section ${section.size}`}>
+  //       <h2>{section.title}</h2>
+  //       <div>セクション内容: {section.type}</div>
+  //     </div>
+  //   );
+  // };
 
   return (
     <div className="dashboard">
@@ -502,10 +616,6 @@ const Dashboard = () => {
           <p>全店舗の運営状況を一元管理</p>
         </div>
         <div className="header-controls">
-          <LayoutCustomizer 
-            onLayoutChange={handleLayoutChange}
-            currentLayout={currentLayout}
-          />
           <div className="last-updated">
             <Clock size={16} />
             最終更新: {lastUpdated.toLocaleTimeString('ja-JP')}
