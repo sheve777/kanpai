@@ -191,10 +191,10 @@ const ReportDetailView = ({ reportId, onBack }) => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#64748b';
+      case 'high': return 'var(--error-500)';
+      case 'medium': return 'var(--warning-500)';
+      case 'low': return 'var(--success-500)';
+      default: return 'var(--text-secondary)';
     }
   };
 
@@ -225,7 +225,7 @@ const ReportDetailView = ({ reportId, onBack }) => {
     );
   }
 
-  const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+  const COLORS = ['var(--chart-purple)', 'var(--info-500)', 'var(--success-500)', 'var(--warning-500)', 'var(--error-500)'];
 
   return (
     <div className="report-detail-view">
@@ -394,8 +394,8 @@ const ReportDetailView = ({ reportId, onBack }) => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={reportData.hourlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="hour" stroke="#e2e8f0" />
-                <YAxis stroke="#e2e8f0" />
+                <XAxis dataKey="hour" stroke="var(--border-primary)" />
+                <YAxis stroke="var(--border-primary)" />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgba(255,255,255,0.95)', 
@@ -404,8 +404,8 @@ const ReportDetailView = ({ reportId, onBack }) => {
                     boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                   }} 
                 />
-                <Bar dataKey="chats" fill="#8b5cf6" name="チャット数" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="reservations" fill="#3b82f6" name="予約数" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="chats" fill="var(--chart-purple)" name="チャット数" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reservations" fill="var(--info-500)" name="予約数" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -498,8 +498,8 @@ const ReportDetailView = ({ reportId, onBack }) => {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={reportData.reservationTrends.timeSlots}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="time" stroke="#e2e8f0" />
-                  <YAxis stroke="#e2e8f0" />
+                  <XAxis dataKey="time" stroke="var(--border-primary)" />
+                  <YAxis stroke="var(--border-primary)" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'rgba(255,255,255,0.95)', 
@@ -507,7 +507,7 @@ const ReportDetailView = ({ reportId, onBack }) => {
                       borderRadius: '8px' 
                     }} 
                   />
-                  <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="var(--success-500)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -517,8 +517,8 @@ const ReportDetailView = ({ reportId, onBack }) => {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={reportData.reservationTrends.dayOfWeek}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="day" stroke="#e2e8f0" />
-                  <YAxis stroke="#e2e8f0" />
+                  <XAxis dataKey="day" stroke="var(--border-primary)" />
+                  <YAxis stroke="var(--border-primary)" />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'rgba(255,255,255,0.95)', 
@@ -526,7 +526,7 @@ const ReportDetailView = ({ reportId, onBack }) => {
                       borderRadius: '8px' 
                     }} 
                   />
-                  <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="var(--warning-500)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

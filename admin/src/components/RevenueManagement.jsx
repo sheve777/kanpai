@@ -76,9 +76,9 @@ const RevenueManagement = () => {
 
     // プラン別収益
     const planRevenue = [
-      { name: 'エントリー', value: 324000, stores: 8, color: '#4ade80' },
-      { name: 'スタンダード', value: 892000, stores: 10, color: '#3b82f6' },
-      { name: 'プロ', value: 546000, stores: 3, color: '#a855f7' }
+      { name: 'エントリー', value: 324000, stores: 8, color: 'var(--success-500)' },
+      { name: 'スタンダード', value: 892000, stores: 10, color: 'var(--info-500)' },
+      { name: 'プロ', value: 546000, stores: 3, color: 'var(--chart-purple)' }
     ];
 
     // 店舗別収益ランキング
@@ -169,7 +169,7 @@ const RevenueManagement = () => {
           <div className="summary-title">💰 本月の収益サマリー</div>
           <div className="summary-stats">
             <div className="summary-stat-item">
-              <DollarSign size={18} style={{ color: '#10b981' }} />
+              <DollarSign size={18} style={{ color: 'var(--success-500)' }} />
               <div className="stat-content">
                 <span className="stat-value">{formatCurrency(kpiSummary.totalRevenue)}</span>
                 <span className="stat-label">総収益</span>
@@ -181,7 +181,7 @@ const RevenueManagement = () => {
             </div>
             
             <div className="summary-stat-item">
-              <TrendingUp size={18} style={{ color: '#3b82f6' }} />
+              <TrendingUp size={18} style={{ color: 'var(--info-500)' }} />
               <div className="stat-content">
                 <span className="stat-value">{formatCurrency(kpiSummary.totalMRR)}</span>
                 <span className="stat-label">MRR</span>
@@ -193,7 +193,7 @@ const RevenueManagement = () => {
             </div>
             
             <div className="summary-stat-item">
-              <Users size={18} style={{ color: '#f59e0b' }} />
+              <Users size={18} style={{ color: 'var(--warning-500)' }} />
               <div className="stat-content">
                 <span className="stat-value">{kpiSummary.activeStores}</span>
                 <span className="stat-label">アクティブ店舗</span>
@@ -205,7 +205,7 @@ const RevenueManagement = () => {
             </div>
             
             <div className="summary-stat-item">
-              <CreditCard size={18} style={{ color: '#8b5cf6' }} />
+              <CreditCard size={18} style={{ color: 'var(--chart-purple)' }} />
               <div className="stat-content">
                 <span className="stat-value">{formatCurrency(kpiSummary.avgARPU)}</span>
                 <span className="stat-label">ARPU</span>
@@ -392,8 +392,8 @@ const RevenueManagement = () => {
                         className="performance-fill"
                         style={{ 
                           width: `${(store.revenue / storeRanking[0].revenue) * 100}%`,
-                          backgroundColor: store.growth > 10 ? '#10b981' : 
-                                         store.growth > 0 ? '#f59e0b' : '#ef4444'
+                          backgroundColor: store.growth > 10 ? 'var(--success-500)' : 
+                                         store.growth > 0 ? 'var(--warning-500)' : 'var(--error-500)'
                         }}
                       />
                       <span className="performance-text">{Math.round((store.revenue / storeRanking[0].revenue) * 100)}%</span>

@@ -71,7 +71,7 @@ const LineSettingsTab = ({ data, onInputChange, onSave, saving, showApiKeys, onT
               value={data?.webhookUrl || 'https://kanpai-plus.jp/api/line/webhook'}
               readOnly
               className="form-input"
-              style={{ backgroundColor: '#f8fafc' }}
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
             />
             <button
               className="action-btn"

@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   User,
-  HardDrive
+  HardDrive,
+  Send,
+  Terminal
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -55,11 +57,25 @@ const Layout = ({ children }) => {
       active: location.pathname === '/revenue'
     },
     {
+      id: 'broadcast',
+      label: '一斉配信',
+      icon: Send,
+      path: '/broadcast',
+      active: location.pathname === '/broadcast'
+    },
+    {
       id: 'backup',
       label: 'バックアップ',
       icon: HardDrive,
       path: '/backup',
       active: location.pathname === '/backup'
+    },
+    {
+      id: 'logs',
+      label: 'ログ分析',
+      icon: Terminal,
+      path: '/logs',
+      active: location.pathname === '/logs'
     },
     {
       id: 'system',

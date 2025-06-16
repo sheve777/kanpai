@@ -404,11 +404,11 @@ const ScheduleManager = () => {
   };
 
   const scheduleTypes = [
-    { id: 'report_generation', label: 'レポート生成', icon: FileText, color: '#10b981' },
-    { id: 'backup', label: 'バックアップ', icon: Database, color: '#3b82f6' },
-    { id: 'monitoring', label: '監視', icon: Bell, color: '#f59e0b' },
-    { id: 'sync', label: '同期', icon: RefreshCw, color: '#8b5cf6' },
-    { id: 'settings_update', label: '設定更新', icon: Settings, color: '#ef4444' }
+    { id: 'report_generation', label: 'レポート生成', icon: FileText, color: 'var(--success-500)' },
+    { id: 'backup', label: 'バックアップ', icon: Database, color: 'var(--info-500)' },
+    { id: 'monitoring', label: '監視', icon: Bell, color: 'var(--warning-500)' },
+    { id: 'sync', label: '同期', icon: RefreshCw, color: 'var(--chart-purple)' },
+    { id: 'settings_update', label: '設定更新', icon: Settings, color: 'var(--error-500)' }
   ];
 
   const getScheduleTypeInfo = (type) => {

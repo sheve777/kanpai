@@ -198,15 +198,15 @@ const ReportManagement = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'sent':
-        return { icon: CheckCircle, label: '配信済み', className: 'status-sent', color: '#10b981' };
+        return { icon: CheckCircle, label: '配信済み', className: 'status-sent', color: 'var(--success-500)' };
       case 'generated':
-        return { icon: Clock, label: '未配信', className: 'status-generated', color: '#f59e0b' };
+        return { icon: Clock, label: '未配信', className: 'status-generated', color: 'var(--warning-500)' };
       case 'draft':
-        return { icon: Edit3, label: '下書き', className: 'status-draft', color: '#6b7280' };
+        return { icon: Edit3, label: '下書き', className: 'status-draft', color: 'var(--text-secondary)' };
       case 'none':
-        return { icon: AlertCircle, label: '未生成', className: 'status-none', color: '#ef4444' };
+        return { icon: AlertCircle, label: '未生成', className: 'status-none', color: 'var(--error-500)' };
       default:
-        return { icon: AlertCircle, label: '不明', className: 'status-unknown', color: '#6b7280' };
+        return { icon: AlertCircle, label: '不明', className: 'status-unknown', color: 'var(--text-secondary)' };
     }
   };
 
@@ -308,7 +308,7 @@ const ReportManagement = () => {
           
           <div className="stats-items">
             <div className="stat-item total">
-              <FileText size={18} style={{ color: '#64748b' }} />
+              <FileText size={18} style={{ color: 'var(--text-secondary)' }} />
               <div className="stat-content">
                 <span className="stat-value">
                   {reportStats.total}
@@ -322,9 +322,9 @@ const ReportManagement = () => {
             <div className="stat-divider"></div>
             
             <div className="stat-item sent">
-              <CheckCircle size={18} style={{ color: '#10b981' }} />
+              <CheckCircle size={18} style={{ color: 'var(--success-500)' }} />
               <div className="stat-content">
-                <span className="stat-value" style={{ color: '#10b981' }}>
+                <span className="stat-value" style={{ color: 'var(--success-500)' }}>
                   {reportStats.sent}
                 </span>
                 <span className="stat-label">
@@ -336,9 +336,9 @@ const ReportManagement = () => {
             <div className="stat-divider"></div>
             
             <div className="stat-item generated">
-              <Clock size={18} style={{ color: '#f59e0b' }} />
+              <Clock size={18} style={{ color: 'var(--warning-500)' }} />
               <div className="stat-content">
-                <span className="stat-value" style={{ color: '#f59e0b' }}>
+                <span className="stat-value" style={{ color: 'var(--warning-500)' }}>
                   {reportStats.generated}
                 </span>
                 <span className="stat-label">
@@ -350,9 +350,9 @@ const ReportManagement = () => {
             <div className="stat-divider"></div>
             
             <div className="stat-item none">
-              <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+              <AlertTriangle size={18} style={{ color: 'var(--error-500)' }} />
               <div className="stat-content">
-                <span className="stat-value" style={{ color: '#ef4444' }}>
+                <span className="stat-value" style={{ color: 'var(--error-500)' }}>
                   {reportStats.none}
                 </span>
                 <span className="stat-label">
@@ -371,8 +371,8 @@ const ReportManagement = () => {
             <span 
               className="completion-percentage"
               style={{ 
-                color: reportStats.sent / reportStats.total > 0.8 ? '#10b981' : 
-                       reportStats.sent / reportStats.total > 0.5 ? '#f59e0b' : '#ef4444'
+                color: reportStats.sent / reportStats.total > 0.8 ? 'var(--success-500)' : 
+                       reportStats.sent / reportStats.total > 0.5 ? 'var(--warning-500)' : 'var(--error-500)'
               }}
             >
               {Math.round(reportStats.sent / reportStats.total * 100)}%
@@ -382,8 +382,8 @@ const ReportManagement = () => {
             <div 
               className="completion-fill"
               style={{ 
-                backgroundColor: reportStats.sent / reportStats.total > 0.8 ? '#10b981' : 
-                                reportStats.sent / reportStats.total > 0.5 ? '#f59e0b' : '#ef4444',
+                backgroundColor: reportStats.sent / reportStats.total > 0.8 ? 'var(--success-500)' : 
+                                reportStats.sent / reportStats.total > 0.5 ? 'var(--warning-500)' : 'var(--error-500)',
                 width: `${(reportStats.sent / reportStats.total * 100)}%`
               }}
             ></div>

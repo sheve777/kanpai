@@ -174,11 +174,11 @@ const Dashboard = () => {
 
   const getColorByType = (type) => {
     switch (type) {
-      case 'blue': return '#3b82f6';
-      case 'green': return '#10b981';
-      case 'orange': return '#f59e0b';
-      case 'purple': return '#8b5cf6';
-      default: return '#64748b';
+      case 'blue': return 'var(--info-500)';
+      case 'green': return 'var(--success-500)';
+      case 'orange': return 'var(--warning-500)';
+      case 'purple': return 'var(--chart-purple)';
+      default: return 'var(--text-secondary)';
     }
   };
 
@@ -433,21 +433,21 @@ const Dashboard = () => {
                 <Line 
                   type="monotone" 
                   dataKey="chats" 
-                  stroke="#3b82f6" 
+                  stroke="var(--info-500)" 
                   strokeWidth={2}
                   name="チャット数"
                 />
                 <Line 
                   type="monotone" 
                   dataKey="reservations" 
-                  stroke="#10b981" 
+                  stroke="var(--success-500)" 
                   strokeWidth={2}
                   name="予約数"
                 />
                 <Line 
                   type="monotone" 
                   dataKey="api_calls" 
-                  stroke="#f59e0b" 
+                  stroke="var(--warning-500)" 
                   strokeWidth={2}
                   name="API呼び出し"
                 />

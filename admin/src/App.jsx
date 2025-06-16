@@ -7,6 +7,8 @@ import ReportManagement from './components/ReportManagement';
 import RevenueManagement from './components/RevenueManagement';
 import BackupExport from './components/BackupExport';
 import SystemSettings from './components/SystemSettings';
+import BroadcastMessage from './components/BroadcastMessage';
+import LogAnalysis from './components/LogAnalysis';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
@@ -101,6 +103,26 @@ function AppContent() {
               <ProtectedRoute>
                 <Layout>
                   <SystemSettings />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/logs" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LogAnalysis />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/broadcast" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <BroadcastMessage />
                 </Layout>
               </ProtectedRoute>
             } 

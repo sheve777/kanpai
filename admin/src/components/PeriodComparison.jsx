@@ -515,14 +515,14 @@ const PeriodComparison = ({ isWidget = false }) => {
                       type="monotone"
                       dataKey="previous"
                       stackId="1"
-                      stroke="#94a3b8"
-                      fill="#f1f5f9"
+                      stroke="var(--text-tertiary)"
+                      fill="var(--bg-tertiary)"
                       name={comparisonData.summary.previous.label}
                     />
                     <Line
                       type="monotone"
                       dataKey="current"
-                      stroke="#3b82f6"
+                      stroke="var(--info-500)"
                       strokeWidth={3}
                       name={comparisonData.summary.current.label}
                     />

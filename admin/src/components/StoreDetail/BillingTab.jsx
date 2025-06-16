@@ -13,10 +13,10 @@ const BillingTab = ({ data }) => {
 
   const getPlanColor = (plan) => {
     switch (plan) {
-      case 'entry': return '#3b82f6';
-      case 'standard': return '#10b981';
-      case 'pro': return '#8b5cf6';
-      default: return '#64748b';
+      case 'entry': return 'var(--info-500)';
+      case 'standard': return 'var(--success-500)';
+      case 'pro': return 'var(--chart-purple)';
+      default: return 'var(--text-secondary)';
     }
   };
 

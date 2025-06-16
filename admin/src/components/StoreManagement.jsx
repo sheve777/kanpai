@@ -18,7 +18,10 @@ import {
   Phone,
   MapPin,
   Calendar,
-  Users
+  Users,
+  RefreshCw,
+  Settings,
+  Zap
 } from 'lucide-react';
 
 const StoreManagement = () => {
@@ -31,6 +34,11 @@ const StoreManagement = () => {
   const [selectedStore, setSelectedStore] = useState(null);
   const [detailModalMode, setDetailModalMode] = useState('view');
   const [showDetailPage, setShowDetailPage] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [storeToDelete, setStoreToDelete] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showTroubleshootDialog, setShowTroubleshootDialog] = useState(false);
+  const [troubleshootStore, setTroubleshootStore] = useState(null);
 
   useEffect(() => {
     fetchStores();
@@ -54,14 +62,22 @@ const StoreManagement = () => {
             last_login: new Date().toISOString(),
             total_reservations: 156,
             created_at: '2024-01-15T10:00:00Z',
-            operating_hours: {
-              mon: { open: '17:00', close: '23:00' },
-              tue: { open: '17:00', close: '23:00' },
-              wed: { open: '17:00', close: '23:00' },
-              thu: { open: '17:00', close: '23:00' },
-              fri: { open: '17:00', close: '24:00' },
-              sat: { open: '16:00', close: '24:00' },
-              sun: { open: '16:00', close: '22:00' }
+            systemStatus: {
+              overall: 'healthy', // healthy, warning, error
+              apiConnections: {
+                openai: 'connected',
+                line: 'connected', 
+                googleCalendar: 'connected'
+              },
+              errorRate: 0.02,
+              responseTime: 1.2,
+              lastError: null
+            },
+            serviceQuality: {
+              aiResponseRate: 0.94,
+              systemUptime: 0.999,
+              apiCallsToday: 156,
+              errorsToday: 3
             }
           },
           {
@@ -73,7 +89,24 @@ const StoreManagement = () => {
             auth_active: true,
             last_login: new Date(Date.now() - 86400000 * 3).toISOString(), // 3日前
             total_reservations: 234,
-            created_at: '2023-11-20T14:30:00Z'
+            created_at: '2023-11-20T14:30:00Z',
+            systemStatus: {
+              overall: 'warning',
+              apiConnections: {
+                openai: 'connected',
+                line: 'connected',
+                googleCalendar: 'error'
+              },
+              errorRate: 0.08,
+              responseTime: 2.8,
+              lastError: new Date(Date.now() - 3600000).toISOString()
+            },
+            serviceQuality: {
+              aiResponseRate: 0.89,
+              systemUptime: 0.987,
+              apiCallsToday: 89,
+              errorsToday: 7
+            }
           },
           {
             id: 'demo-store-003',
@@ -84,7 +117,24 @@ const StoreManagement = () => {
             auth_active: true,
             last_login: new Date(Date.now() - 86400000 * 10).toISOString(), // 10日前（要注意）
             total_reservations: 89,
-            created_at: '2024-03-01T09:00:00Z'
+            created_at: '2024-03-01T09:00:00Z',
+            systemStatus: {
+              overall: 'warning',
+              apiConnections: {
+                openai: 'connected',
+                line: 'warning',
+                googleCalendar: 'connected'
+              },
+              errorRate: 0.12,
+              responseTime: 3.5,
+              lastError: new Date(Date.now() - 7200000).toISOString()
+            },
+            serviceQuality: {
+              aiResponseRate: 0.85,
+              systemUptime: 0.978,
+              apiCallsToday: 23,
+              errorsToday: 5
+            }
           },
           {
             id: 'demo-store-004',
@@ -95,7 +145,24 @@ const StoreManagement = () => {
             auth_active: false, // 停止中
             last_login: new Date(Date.now() - 86400000 * 30).toISOString(), // 30日前
             total_reservations: 45,
-            created_at: '2023-09-10T11:00:00Z'
+            created_at: '2023-09-10T11:00:00Z',
+            systemStatus: {
+              overall: 'error',
+              apiConnections: {
+                openai: 'error',
+                line: 'connected',
+                googleCalendar: 'error'
+              },
+              errorRate: 0.35,
+              responseTime: 8.2,
+              lastError: new Date(Date.now() - 1800000).toISOString()
+            },
+            serviceQuality: {
+              aiResponseRate: 0.72,
+              systemUptime: 0.891,
+              apiCallsToday: 0,
+              errorsToday: 15
+            }
           },
           {
             id: 'demo-store-005',
@@ -106,7 +173,33 @@ const StoreManagement = () => {
             auth_active: true,
             last_login: new Date().toISOString(),
             total_reservations: 312,
-            created_at: '2023-06-15T13:45:00Z'
+            created_at: '2023-06-15T13:45:00Z',
+            operating_hours: {
+              mon: { open: '17:30', close: '23:30' },
+              tue: { open: '17:30', close: '23:30' },
+              wed: { open: '17:30', close: '23:30' },
+              thu: { open: '17:30', close: '23:30' },
+              fri: { open: '17:30', close: '24:00' },
+              sat: { open: '17:00', close: '24:00' },
+              sun: { open: '17:00', close: '23:00' }
+            },
+            systemStatus: {
+              overall: 'healthy',
+              apiConnections: {
+                openai: 'connected',
+                line: 'connected',
+                googleCalendar: 'connected'
+              },
+              errorRate: 0.01,
+              responseTime: 0.9,
+              lastError: new Date(Date.now() - 86400000 * 2).toISOString()
+            },
+            serviceQuality: {
+              aiResponseRate: 0.96,
+              systemUptime: 0.9995,
+              apiCallsToday: 234,
+              errorsToday: 1
+            }
           }
         ];
         setStores(demoStores);
@@ -126,36 +219,115 @@ const StoreManagement = () => {
     }
   };
 
-  const handleViewStore = (store) => {
+  const handleManageStore = (store) => {
     setSelectedStore(store.id);
     setShowDetailPage(true);
   };
 
-  const handleEditStore = (store) => {
-    setSelectedStore(store.id);
-    setShowDetailPage(true);
+  const handleDeleteStore = (store) => {
+    setStoreToDelete(store);
+    setDeleteConfirmText('');
+    setShowDeleteConfirm(true);
   };
 
-  const handleDeleteStore = async (store) => {
-    if (confirm(`本当に「${store.name}」を削除しますか？この操作は取り消せません。`)) {
-      try {
-        // ローカル環境では削除をシミュレート
-        if (window.location.hostname === 'localhost') {
-          console.log('🗑️ 店舗削除（ローカルシミュレーション）:', store.id);
-          alert('店舗を削除しました（ローカル環境）');
-          fetchStores();
-          return;
-        }
-        
-        const response = await api.delete(`/stores/${store.id}`);
-        if (response.data.success) {
-          alert('店舗を削除しました');
-          fetchStores();
-        }
-      } catch (error) {
-        console.error('削除エラー:', error);
-        alert('削除に失敗しました');
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmText !== storeToDelete.name) {
+      alert('店舗名が正しく入力されていません');
+      return;
+    }
+
+    // 最終確認ダイアログ
+    const finalConfirmMessage = `⚠️ 最終確認 ⚠️\n\n本当に「${storeToDelete.name}」を削除しますか？\n\nこの操作は取り消せません。\n・店舗データ\n・予約履歴\n・レポート\n・設定情報\n\nすべて完全に削除されます。`;
+    
+    if (!window.confirm(finalConfirmMessage)) {
+      return;
+    }
+
+    try {
+      // ローカル環境では削除をシミュレート
+      if (window.location.hostname === 'localhost') {
+        console.log('🗑️ 店舗削除（ローカルシミュレーション）:', storeToDelete.id);
+        alert(`「${storeToDelete.name}」を削除しました（ローカル環境）`);
+        setShowDeleteConfirm(false);
+        setStoreToDelete(null);
+        setDeleteConfirmText('');
+        fetchStores();
+        return;
       }
+      
+      const response = await api.delete(`/stores/${storeToDelete.id}`);
+      if (response.data.success) {
+        alert(`「${storeToDelete.name}」を削除しました`);
+        setShowDeleteConfirm(false);
+        setStoreToDelete(null);
+        setDeleteConfirmText('');
+        fetchStores();
+      }
+    } catch (error) {
+      console.error('削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setStoreToDelete(null);
+    setDeleteConfirmText('');
+  };
+
+  const handleTroubleshoot = (store) => {
+    setTroubleshootStore(store);
+    setShowTroubleshootDialog(true);
+  };
+
+  const handleApiReconnect = async (apiType) => {
+    if (window.location.hostname === 'localhost') {
+      console.log('🔄 API再接続シミュレーション:', apiType);
+      alert(`${apiType} APIの再接続を試行しました（ローカル環境）`);
+      // デモ用に成功したことにする
+      setTimeout(() => {
+        fetchStores();
+      }, 1000);
+      return;
+    }
+
+    try {
+      const response = await api.post(`/stores/${troubleshootStore.id}/reconnect-api`, {
+        apiType: apiType
+      });
+      if (response.data.success) {
+        alert(`${apiType} APIの再接続に成功しました`);
+        fetchStores();
+      }
+    } catch (error) {
+      alert(`${apiType} APIの再接続に失敗しました`);
+    }
+  };
+
+  const handleSystemRestart = async () => {
+    if (!window.confirm('本当にシステムを再起動しますか？\n一時的にサービスが停止します。')) {
+      return;
+    }
+
+    if (window.location.hostname === 'localhost') {
+      console.log('🔄 システム再起動シミュレーション');
+      alert('システムを再起動しました（ローカル環境）');
+      setShowTroubleshootDialog(false);
+      setTimeout(() => {
+        fetchStores();
+      }, 2000);
+      return;
+    }
+
+    try {
+      const response = await api.post(`/stores/${troubleshootStore.id}/restart-system`);
+      if (response.data.success) {
+        alert('システムの再起動を開始しました');
+        setShowTroubleshootDialog(false);
+        fetchStores();
+      }
+    } catch (error) {
+      alert('システム再起動に失敗しました');
     }
   };
 
@@ -205,21 +377,24 @@ const StoreManagement = () => {
 
   const filteredStores = stores.filter(store => {
     const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const statusInfo = getStatusInfo(store);
     
     if (selectedFilter === 'all') return matchesSearch;
-    if (selectedFilter === 'active') return matchesSearch && statusInfo.status === 'active';
-    if (selectedFilter === 'warning') return matchesSearch && statusInfo.status === 'warning';
-    if (selectedFilter === 'inactive') return matchesSearch && statusInfo.status === 'inactive';
+    if (selectedFilter === 'healthy') return matchesSearch && store.systemStatus?.overall === 'healthy';
+    if (selectedFilter === 'warning') return matchesSearch && store.systemStatus?.overall === 'warning';
+    if (selectedFilter === 'error') return matchesSearch && store.systemStatus?.overall === 'error';
     
     return matchesSearch;
   });
 
+  const getSystemStatusCount = (status) => {
+    return stores.filter(s => s.systemStatus?.overall === status).length;
+  };
+
   const filterOptions = [
     { value: 'all', label: '全て', count: stores.length },
-    { value: 'active', label: '稼働中', count: stores.filter(s => getStatusInfo(s).status === 'active').length },
-    { value: 'warning', label: '要注意', count: stores.filter(s => getStatusInfo(s).status === 'warning').length },
-    { value: 'inactive', label: '停止中', count: stores.filter(s => getStatusInfo(s).status === 'inactive').length }
+    { value: 'healthy', label: '正常稼働', count: getSystemStatusCount('healthy') },
+    { value: 'warning', label: '確認推奨', count: getSystemStatusCount('warning') },
+    { value: 'error', label: '要対応', count: getSystemStatusCount('error') }
   ];
 
   if (loading) {
@@ -290,11 +465,9 @@ const StoreManagement = () => {
             <tr>
               <th>店舗名</th>
               <th>プラン</th>
-              <th>ステータス</th>
-              <th>今月利用</th>
-              <th>残ポイント</th>
-              <th>最終ログイン</th>
-              <th>予約数</th>
+              <th>システム状態</th>
+              <th>API連携</th>
+              <th>最終活動</th>
               <th>アクション</th>
             </tr>
           </thead>
@@ -323,54 +496,110 @@ const StoreManagement = () => {
                     <span className="plan-badge">{plan}</span>
                   </td>
                   <td>
-                    <span className={`status-badge ${statusInfo.className}`}>
-                      {statusInfo.label}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="usage-info">
-                      <div className="usage-bar">
-                        <div 
-                          className="usage-fill" 
-                          style={{ width: `${usage}%` }}
-                        ></div>
+                    <div className="system-status">
+                      <span 
+                        className={`status-indicator ${store.systemStatus?.overall || 'unknown'}`}
+                        title={
+                          store.systemStatus?.overall === 'error' ? 
+                            `🚨 エラー詳細:\n${store.systemStatus?.apiConnections?.openai === 'error' ? '• OpenAI API接続エラー\n' : ''}${store.systemStatus?.apiConnections?.line === 'error' ? '• LINE API接続エラー\n' : ''}${store.systemStatus?.apiConnections?.googleCalendar === 'error' ? '• Google Calendar API接続エラー\n' : ''}最終エラー: ${store.systemStatus?.lastError ? new Date(store.systemStatus.lastError).toLocaleString('ja-JP') : '不明'}` :
+                          store.systemStatus?.overall === 'warning' ?
+                            `⚠️ 警告詳細:\n${store.systemStatus?.apiConnections?.openai === 'warning' ? '• OpenAI API応答遅延\n' : ''}${store.systemStatus?.apiConnections?.line === 'warning' ? '• LINE API応答遅延\n' : ''}${store.systemStatus?.apiConnections?.googleCalendar === 'warning' ? '• Google Calendar API応答遅延\n' : ''}${store.systemStatus?.apiConnections?.googleCalendar === 'error' ? '• Google Calendar API接続エラー\n' : ''}エラー率が高い状態です` :
+                          store.systemStatus?.overall === 'healthy' ?
+                            '✅ すべてのシステムが正常に動作しています' :
+                            'システム状態を取得できません'
+                        }
+                      >
+                        {store.systemStatus?.overall === 'healthy' ? '🟢 正常稼働' :
+                         store.systemStatus?.overall === 'warning' ? '🟡 確認推奨' :
+                         store.systemStatus?.overall === 'error' ? '🔴 要対応' : '❓ 不明'}
+                      </span>
+                      <div className="status-details">
+                        <small>エラー率: {Math.round((store.systemStatus?.errorRate || 0) * 100)}% | 応答: {store.systemStatus?.responseTime || 0}s</small>
                       </div>
-                      <span>{usage}%</span>
                     </div>
                   </td>
                   <td>
-                    <span className="points">{points.toLocaleString()}pt</span>
-                  </td>
-                  <td>
-                    <div className="date-info">
-                      {store.last_login ? new Date(store.last_login).toLocaleDateString('ja-JP') : '未ログイン'}
+                    <div className="api-connections-inline">
+                      <span 
+                        className={`api-status ${store.systemStatus?.apiConnections?.openai || 'unknown'}`}
+                        title={
+                          store.systemStatus?.apiConnections?.openai === 'connected' ? 'OpenAI API: 正常接続' :
+                          store.systemStatus?.apiConnections?.openai === 'warning' ? 'OpenAI API: 応答遅延 - レート制限の可能性' :
+                          store.systemStatus?.apiConnections?.openai === 'error' ? 'OpenAI API: 接続エラー - APIキーまたはネットワークエラー' :
+                          'OpenAI API: 状態不明'
+                        }
+                      >
+                        🤖{store.systemStatus?.apiConnections?.openai === 'connected' ? '✅' : 
+                            store.systemStatus?.apiConnections?.openai === 'warning' ? '⚠️' : '❌'}
+                      </span>
+                      <span 
+                        className={`api-status ${store.systemStatus?.apiConnections?.line || 'unknown'}`}
+                        title={
+                          store.systemStatus?.apiConnections?.line === 'connected' ? 'LINE API: 正常接続' :
+                          store.systemStatus?.apiConnections?.line === 'warning' ? 'LINE API: 応答遅延 - 配信制限の可能性' :
+                          store.systemStatus?.apiConnections?.line === 'error' ? 'LINE API: 接続エラー - トークンまたは設定エラー' :
+                          'LINE API: 状態不明'
+                        }
+                      >
+                        💬{store.systemStatus?.apiConnections?.line === 'connected' ? '✅' : 
+                            store.systemStatus?.apiConnections?.line === 'warning' ? '⚠️' : '❌'}
+                      </span>
+                      <span 
+                        className={`api-status ${store.systemStatus?.apiConnections?.googleCalendar || 'unknown'}`}
+                        title={
+                          store.systemStatus?.apiConnections?.googleCalendar === 'connected' ? 'Google Calendar API: 正常接続' :
+                          store.systemStatus?.apiConnections?.googleCalendar === 'warning' ? 'Google Calendar API: 応答遅延 - クォータ制限の可能性' :
+                          store.systemStatus?.apiConnections?.googleCalendar === 'error' ? 'Google Calendar API: 接続エラー - 認証または権限エラー' :
+                          'Google Calendar API: 状態不明'
+                        }
+                      >
+                        📅{store.systemStatus?.apiConnections?.googleCalendar === 'connected' ? '✅' : 
+                            store.systemStatus?.apiConnections?.googleCalendar === 'warning' ? '⚠️' : '❌'}
+                      </span>
                     </div>
                   </td>
                   <td>
-                    <span className="reservation-count">{store.total_reservations || 0}</span>
+                    <div className="activity-info">
+                      <div className="last-login">
+                        {store.last_login ? new Date(store.last_login).toLocaleDateString('ja-JP') : '未ログイン'}
+                      </div>
+                      <div className="activity-summary">
+                        <small>
+                          {store.last_login ? 
+                            `${Math.floor((Date.now() - new Date(store.last_login)) / (1000 * 60 * 60 * 24))}日前 | 今日: API呼び出し${store.serviceQuality?.apiCallsToday || 0}回` : 
+                            'システム未使用'
+                          }
+                        </small>
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <div className="action-buttons">
                       <button 
-                        className="action-btn" 
-                        title="詳細"
-                        onClick={() => handleViewStore(store)}
+                        className="action-btn primary" 
+                        title="店舗管理（詳細・編集）"
+                        onClick={() => handleManageStore(store)}
                       >
-                        <Eye size={16} />
+                        <Edit size={14} />
+                        管理
                       </button>
-                      <button 
-                        className="action-btn" 
-                        title="編集"
-                        onClick={() => handleEditStore(store)}
-                      >
-                        <Edit size={16} />
-                      </button>
+                      {(store.systemStatus?.overall === 'error' || store.systemStatus?.overall === 'warning') && (
+                        <button 
+                          className="action-btn warning" 
+                          title="問題を解決"
+                          onClick={() => handleTroubleshoot(store)}
+                        >
+                          <RefreshCw size={14} />
+                          対処
+                        </button>
+                      )}
                       <button 
                         className="action-btn danger" 
-                        title="削除"
+                        title="店舗削除"
                         onClick={() => handleDeleteStore(store)}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
+                        削除
                       </button>
                     </div>
                   </td>
@@ -408,6 +637,167 @@ const StoreManagement = () => {
         storeId={selectedStore}
         mode={detailModalMode}
       />
+
+      {/* Troubleshoot Dialog */}
+      {showTroubleshootDialog && troubleshootStore && (
+        <div className="confirmation-overlay">
+          <div className="confirmation-dialog">
+            <div className="dialog-header">
+              <h3>🔧 問題解決アクション</h3>
+              <p>{troubleshootStore.name}</p>
+            </div>
+            
+            <div className="dialog-content">
+              <div className="troubleshoot-status">
+                <h4>現在の状態</h4>
+                <div className="status-summary">
+                  <div className="status-item">
+                    <span className="label">システム状態:</span>
+                    <span className={`value ${troubleshootStore.systemStatus?.overall}`}>
+                      {troubleshootStore.systemStatus?.overall === 'error' ? '🔴 要対応' : '🟡 確認推奨'}
+                    </span>
+                  </div>
+                  <div className="status-item">
+                    <span className="label">エラー率:</span>
+                    <span className="value">{Math.round((troubleshootStore.systemStatus?.errorRate || 0) * 100)}%</span>
+                  </div>
+                  <div className="status-item">
+                    <span className="label">応答時間:</span>
+                    <span className="value">{troubleshootStore.systemStatus?.responseTime || 0}秒</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="troubleshoot-actions">
+                <h4>対処方法を選択</h4>
+                
+                {/* API再接続ボタン */}
+                {troubleshootStore.systemStatus?.apiConnections?.openai === 'error' && (
+                  <button 
+                    className="troubleshoot-btn"
+                    onClick={() => handleApiReconnect('OpenAI')}
+                  >
+                    <RefreshCw size={16} />
+                    OpenAI API 再接続
+                    <small>APIキーと接続設定を確認して再接続</small>
+                  </button>
+                )}
+                
+                {troubleshootStore.systemStatus?.apiConnections?.line === 'error' && (
+                  <button 
+                    className="troubleshoot-btn"
+                    onClick={() => handleApiReconnect('LINE')}
+                  >
+                    <RefreshCw size={16} />
+                    LINE API 再接続
+                    <small>トークンと権限を確認して再接続</small>
+                  </button>
+                )}
+                
+                {troubleshootStore.systemStatus?.apiConnections?.googleCalendar === 'error' && (
+                  <button 
+                    className="troubleshoot-btn"
+                    onClick={() => handleApiReconnect('Google Calendar')}
+                  >
+                    <RefreshCw size={16} />
+                    Google Calendar API 再接続
+                    <small>認証情報を確認して再接続</small>
+                  </button>
+                )}
+                
+                <button 
+                  className="troubleshoot-btn"
+                  onClick={() => {
+                    setShowTroubleshootDialog(false);
+                    handleManageStore(troubleshootStore);
+                  }}
+                >
+                  <Settings size={16} />
+                  設定を確認
+                  <small>API設定やトークンを手動で確認・修正</small>
+                </button>
+                
+                <button 
+                  className="troubleshoot-btn restart"
+                  onClick={handleSystemRestart}
+                >
+                  <Zap size={16} />
+                  システム再起動
+                  <small>すべてのサービスを再起動（最終手段）</small>
+                </button>
+              </div>
+            </div>
+            
+            <div className="dialog-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowTroubleshootDialog(false)}
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="confirmation-overlay">
+          <div className="confirmation-dialog">
+            <div className="dialog-header">
+              <h3>⚠️ 店舗削除確認</h3>
+              <p>本当に削除しますか？この操作は取り消せません。</p>
+            </div>
+            
+            <div className="dialog-content">
+              <div className="store-delete-info">
+                <h4>削除対象店舗</h4>
+                <div className="store-info-card">
+                  <div className="store-name">{storeToDelete?.name}</div>
+                  <div className="store-details">
+                    <span>📍 {storeToDelete?.address}</span>
+                    <span>📞 {storeToDelete?.phone}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="delete-confirmation-input">
+                <label>
+                  <strong>確認のため、店舗名を正確に入力してください：</strong>
+                </label>
+                <div className="large-input-container">
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={storeToDelete?.name}
+                    className="confirmation-input-large"
+                  />
+                </div>
+                <small className="input-hint">
+                  削除するには「{storeToDelete?.name}」と入力してください
+                </small>
+              </div>
+            </div>
+            
+            <div className="dialog-actions">
+              <button
+                className="btn-secondary"
+                onClick={handleCancelDelete}
+              >
+                キャンセル
+              </button>
+              <button
+                className="btn-danger"
+                onClick={handleConfirmDelete}
+                disabled={deleteConfirmText !== storeToDelete?.name}
+              >
+                削除実行
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -422,7 +422,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
           <div className="summary-title">📈 {selectedMonth.replace('-', '年')}月 {storeInfo?.name || '店舗'}レポート</div>
           <div className="summary-stats">
             <div className="summary-stat-item">
-              <FileText size={18} style={{ color: '#64748b' }} />
+              <FileText size={18} style={{ color: 'var(--text-secondary)' }} />
               <div className="stat-content">
                 <span className="stat-value">{reports.length}</span>
                 <span className="stat-label">総レポート数</span>
@@ -430,7 +430,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
             </div>
             
             <div className="summary-stat-item">
-              <CheckCircle size={18} style={{ color: '#10b981' }} />
+              <CheckCircle size={18} style={{ color: 'var(--success-500)' }} />
               <div className="stat-content">
                 <span className="stat-value">{reports.filter(r => r.status === 'sent').length}</span>
                 <span className="stat-label">配信済み</span>
@@ -438,7 +438,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
             </div>
             
             <div className="summary-stat-item">
-              <Clock size={18} style={{ color: '#f59e0b' }} />
+              <Clock size={18} style={{ color: 'var(--warning-500)' }} />
               <div className="stat-content">
                 <span className="stat-value">{reports.filter(r => r.status === 'generated').length}</span>
                 <span className="stat-label">未配信</span>
@@ -446,7 +446,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
             </div>
             
             <div className="summary-stat-item">
-              <Edit3 size={18} style={{ color: '#8b5cf6' }} />
+              <Edit3 size={18} style={{ color: 'var(--chart-purple)' }} />
               <div className="stat-content">
                 <span className="stat-value">{reports.filter(r => r.status === 'draft').length}</span>
                 <span className="stat-label">下書き</span>
@@ -542,7 +542,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
                             onClick={() => handleSendReport(report.id)}
                             disabled={sending}
                             title="配信"
-                            style={{ background: '#10b981', color: 'white' }}
+                            style={{ background: 'var(--success-500)', color: 'var(--text-inverse)' }}
                           >
                             <Send size={14} />
                             配信

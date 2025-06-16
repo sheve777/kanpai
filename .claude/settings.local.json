@@ -45,7 +45,10 @@
       "Bash(npx vite:*)",
       "Bash(npm ls:*)",
       "WebFetch(domain:sheve777.github.io)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(for file in ApiUsagePrediction.jsx PeriodComparison.jsx ScheduleManager.jsx TemplateManager.jsx)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": []
   }

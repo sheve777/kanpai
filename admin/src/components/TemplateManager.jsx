@@ -307,10 +307,10 @@ const TemplateManager = () => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'store': return '#3b82f6';
-      case 'report': return '#10b981';
-      case 'system': return '#f59e0b';
-      default: return '#6b7280';
+      case 'store': return 'var(--info-500)';
+      case 'report': return 'var(--success-500)';
+      case 'system': return 'var(--warning-500)';
+      default: return 'var(--text-secondary)';
     }
   };
 

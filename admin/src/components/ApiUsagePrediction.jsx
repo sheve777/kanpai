@@ -346,8 +346,8 @@ const ApiUsagePrediction = ({ isWidget = false }) => {
                 className="progress-fill"
                 style={{ 
                   width: `${Math.min(predictionData.summary.utilizationRate, 100)}%`,
-                  backgroundColor: predictionData.summary.utilizationRate > 90 ? '#ef4444' : 
-                                  predictionData.summary.utilizationRate > 80 ? '#f59e0b' : '#10b981'
+                  backgroundColor: predictionData.summary.utilizationRate > 90 ? 'var(--error-500)' : 
+                                  predictionData.summary.utilizationRate > 80 ? 'var(--warning-500)' : 'var(--success-500)'
                 }}
               />
             </div>
@@ -523,8 +523,8 @@ const ApiUsagePrediction = ({ isWidget = false }) => {
                   <Area
                     type="monotone"
                     dataKey="actual"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
+                    stroke="var(--info-500)"
+                    fill="var(--info-500)"
                     fillOpacity={0.3}
                     name="実績"
                     connectNulls={false}
@@ -534,8 +534,8 @@ const ApiUsagePrediction = ({ isWidget = false }) => {
                   <Area
                     type="monotone"
                     dataKey="predicted"
-                    stroke="#10b981"
-                    fill="#10b981"
+                    stroke="var(--success-500)"
+                    fill="var(--success-500)"
                     fillOpacity={0.2}
                     name="予測"
                     strokeDasharray="5 5"
@@ -545,7 +545,7 @@ const ApiUsagePrediction = ({ isWidget = false }) => {
                   {/* 制限線 */}
                   <ReferenceLine 
                     y={predictionData.summary.monthlyLimit} 
-                    stroke="#ef4444" 
+                    stroke="var(--error-500)" 
                     strokeDasharray="3 3"
                     label="月次制限"
                   />

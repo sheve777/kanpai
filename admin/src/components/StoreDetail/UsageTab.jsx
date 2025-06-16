@@ -7,9 +7,9 @@ const UsageTab = ({ data }) => {
   };
 
   const getUsageColor = (percentage) => {
-    if (percentage >= 90) return '#ef4444';
-    if (percentage >= 70) return '#f59e0b';
-    return '#10b981';
+    if (percentage >= 90) return 'var(--error-500)';
+    if (percentage >= 70) return 'var(--warning-500)';
+    return 'var(--success-500)';
   };
 
   return (
