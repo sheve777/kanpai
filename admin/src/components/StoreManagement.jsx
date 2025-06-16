@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import StoreWizard from './StoreWizard';
 import StoreDetailModal from './StoreDetailModal';
-import StoreDetail from './StoreDetail';
+import StoreDetail from './StoreDetail/index';
 import {
   Search,
   Filter,
