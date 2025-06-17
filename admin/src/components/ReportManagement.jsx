@@ -22,7 +22,9 @@ import {
   ChevronRight,
   Plus,
   Filter,
-  Search
+  Search,
+  MapPin,
+  Store
 } from 'lucide-react';
 
 const ReportManagement = () => {
@@ -34,9 +36,131 @@ const ReportManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [generating, setGenerating] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
+  const [showLatestReport, setShowLatestReport] = useState(false);
 
   // ローカル環境判定
   const isLocalEnv = window.location.hostname === 'localhost';
+
+  // Action handlers for buttons
+  const handleSendReport = async (storeId) => {
+    // 配信前の確認ダイアログ
+    const store = stores.find(s => s.id === storeId);
+    const storeName = store?.name || '店舗';
+    const currentMonth = new Date(selectedMonth).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+    
+    const confirmMessage = `📤 レポート配信確認\n\n以下のレポートをLINEで配信しますか？\n\n店舗: ${storeName}\n対象月: ${currentMonth}\n\n配信後は顧客に自動送信されます。\n本当に配信しますか？`;
+    
+    if (!window.confirm(confirmMessage)) {
+      console.log('❌ レポート配信をキャンセルしました');
+      return;
+    }
+    
+    if (isLocalEnv) {
+      console.log('📤 レポート配信シミュレーション:', storeId);
+      alert('レポートを配信しました（ローカル環境）');
+      // Update status to sent
+      setStores(prev => prev.map(store => 
+        store.id === storeId ? { ...store, reportStatus: 'sent', lastReportDate: new Date().toISOString() } : store
+      ));
+      return;
+    }
+    
+    try {
+      const response = await api.post(`/reports/send/${storeId}`, { month: selectedMonth });
+      if (response.data.success) {
+        alert('レポートを配信しました');
+        fetchStoreReports();
+      }
+    } catch (error) {
+      console.error('レポート配信エラー:', error);
+      alert('配信に失敗しました');
+    }
+  };
+
+  const handleDownloadReport = async (storeId) => {
+    if (isLocalEnv) {
+      console.log('📥 レポートダウンロードシミュレーション:', storeId);
+      alert('レポートをダウンロードしました（ローカル環境）');
+      return;
+    }
+    
+    try {
+      const response = await api.get(`/reports/download/${storeId}?month=${selectedMonth}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `report_${storeId}_${selectedMonth}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('レポートダウンロードエラー:', error);
+      alert('ダウンロードに失敗しました');
+    }
+  };
+
+  const handleEditReport = (storeId) => {
+    console.log('✏️ レポート編集:', storeId);
+    // Navigate to report editor
+    setSelectedStore(storeId);
+  };
+
+  const handleGenerateReport = async (storeId) => {
+    if (isLocalEnv) {
+      console.log('🤖 個別レポート生成シミュレーション:', storeId);
+      alert('AIでレポートを生成しました（ローカル環境）');
+      // Update status to generated
+      setStores(prev => prev.map(store => 
+        store.id === storeId ? { ...store, reportStatus: 'generated' } : store
+      ));
+      return;
+    }
+    
+    try {
+      const response = await api.post(`/reports/generate/${storeId}`, { month: selectedMonth });
+      if (response.data.success) {
+        alert('レポートを生成しました');
+        fetchStoreReports();
+      }
+    } catch (error) {
+      console.error('レポート生成エラー:', error);
+      alert('生成に失敗しました');
+    }
+  };
+
+  const handleCreateManualReport = (storeId) => {
+    console.log('📝 手動レポート作成:', storeId);
+    // Navigate to manual report creator
+    setSelectedStore(storeId);
+  };
+
+  const handleRegenerateReport = async (storeId) => {
+    if (isLocalEnv) {
+      console.log('🔄 レポート再生成シミュレーション:', storeId);
+      alert('レポートを再生成しました（ローカル環境）');
+      return;
+    }
+    
+    try {
+      const response = await api.post(`/reports/regenerate/${storeId}`, { month: selectedMonth });
+      if (response.data.success) {
+        alert('レポートを再生成しました');
+        fetchStoreReports();
+      }
+    } catch (error) {
+      console.error('レポート再生成エラー:', error);
+      alert('再生成に失敗しました');
+    }
+  };
+
+  const handleViewLatestReport = (storeId) => {
+    console.log('📄 最新レポート表示:', storeId);
+    // 最新レポートフラグを設定して詳細画面を開く
+    setShowLatestReport(true);
+    setSelectedStore(storeId);
+  };
 
   useEffect(() => {
     fetchStoreReports();
@@ -228,6 +352,18 @@ const ReportManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const getReportStatusCount = (status) => {
+    return stores.filter(s => s.reportStatus === status).length;
+  };
+
+  const filterOptions = [
+    { value: 'all', label: '全て', count: stores.length },
+    { value: 'sent', label: '配信済み', count: getReportStatusCount('sent') },
+    { value: 'generated', label: '未配信', count: getReportStatusCount('generated') },
+    { value: 'draft', label: '下書き', count: getReportStatusCount('draft') },
+    { value: 'none', label: '未生成', count: getReportStatusCount('none') }
+  ];
+
   const reportStats = {
     total: stores.length,
     sent: stores.filter(s => s.reportStatus === 'sent').length,
@@ -250,7 +386,11 @@ const ReportManagement = () => {
     return (
       <ReportManagementDetail 
         storeId={selectedStore} 
-        onBack={() => setSelectedStore(null)} 
+        showLatestReport={showLatestReport}
+        onBack={() => {
+          setSelectedStore(null);
+          setShowLatestReport(false);
+        }} 
       />
     );
   }
@@ -391,45 +531,41 @@ const ReportManagement = () => {
         </div>
       </div>
 
-      {/* フィルター・検索 */}
-      <div className="filters-section">
+      {/* Search and Filter */}
+      <div className="search-filter-bar">
         <div className="search-box">
-          <Search size={20} />
+          <Search size={18} />
           <input
             type="text"
-            placeholder="店舗名・場所で検索..."
+            placeholder="店舗名で検索..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
           />
         </div>
         
-        <div className="filter-group">
-          <Filter size={16} />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">すべてのステータス</option>
-            <option value="sent">配信済み</option>
-            <option value="generated">未配信</option>
-            <option value="draft">下書き</option>
-            <option value="none">未生成</option>
-          </select>
+        <div className="filter-buttons">
+          {filterOptions.map(option => (
+            <button
+              key={option.value}
+              className={`filter-btn ${statusFilter === option.value ? 'active' : ''}`}
+              onClick={() => setStatusFilter(option.value)}
+            >
+              {option.label} ({option.count})
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 店舗テーブル */}
+      {/* Stores Table */}
       <div className="stores-table-container">
         <table className="stores-table">
           <thead>
             <tr>
               <th>店舗名</th>
-              <th>ステータス</th>
-              <th>最終レポート</th>
-              <th>レポート品質</th>
-              <th>配信状況</th>
+              <th>プラン</th>
+              <th>レポート状況</th>
+              <th>データ期間</th>
+              <th>最終配信</th>
               <th>アクション</th>
             </tr>
           </thead>
@@ -438,113 +574,163 @@ const ReportManagement = () => {
               const statusInfo = getStatusBadge(store.reportStatus);
               const StatusIcon = statusInfo.icon;
               
+              // データ期間の計算
+              const getDataPeriod = () => {
+                const currentDate = new Date(selectedMonth);
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                const startDate = new Date(year, currentDate.getMonth(), 1);
+                const endDate = new Date(year, currentDate.getMonth() + 1, 0);
+                
+                return {
+                  period: `${year}年${month.toString().padStart(2, '0')}月`,
+                  range: `${month}/1 - ${month}/${endDate.getDate()}`,
+                  completeness: Math.floor(Math.random() * 21) + 80, // 80-100%のランダム
+                  dataPoints: Math.floor(Math.random() * 500) + 100 // 100-600のデータポイント
+                };
+              };
+
+              const dataPeriod = getDataPeriod();
+
               return (
-                <tr 
-                  key={store.id} 
-                  className="store-row"
-                  onClick={() => setSelectedStore(store.id)}
-                >
-                  <td className="store-name-cell">
-                    <div className="store-name-content">
-                      <div className="store-name">{store.name}</div>
-                      <div className="store-location">{store.location}</div>
-                    </div>
-                  </td>
-                  
-                  <td className="status-cell">
-                    <span 
-                      className={`status-badge compact ${statusInfo.className}`}
-                      style={{ color: statusInfo.color }}
-                    >
-                      <StatusIcon size={14} />
-                      {statusInfo.label}
-                    </span>
-                  </td>
-                  
-                  <td className="date-cell">
-                    {store.lastReportDate ? (
-                      <div className="date-value">
-                        <Calendar size={12} />
-                        <span>{new Date(store.lastReportDate).toLocaleDateString('ja-JP')}</span>
-                        <small>{Math.floor((Date.now() - new Date(store.lastReportDate)) / (1000 * 60 * 60 * 24))}日前</small>
-                      </div>
-                    ) : (
-                      <span className="no-data">未生成</span>
-                    )}
-                  </td>
-
-                  <td className="quality-cell">
-                    <div className="quality-indicator">
-                      <div className="quality-score">
-                        <span className={`quality-value ${store.healthScore >= 90 ? 'excellent' : store.healthScore >= 80 ? 'good' : store.healthScore >= 70 ? 'fair' : 'poor'}`}>
-                          {store.healthScore}点
-                        </span>
-                        <div className="quality-factors">
-                          <small>AI品質: {store.metrics.aiResponseRate * 100}%</small>
+                <tr key={store.id}>
+                  <td>
+                    <div className="store-info">
+                      <Store size={16} />
+                      <div className="store-content">
+                        <div className="store-name">{store.name}</div>
+                        <div className="store-details">
+                          <MapPin size={12} />
+                          {store.location}
                         </div>
                       </div>
                     </div>
                   </td>
-
-                  <td className="delivery-cell">
-                    <div className="delivery-status">
-                      {store.reportStatus === 'sent' ? (
-                        <div className="delivery-success">
-                          <CheckCircle size={12} />
-                          <span>配信完了</span>
-                          <small>LINE送信済み</small>
-                        </div>
-                      ) : store.reportStatus === 'generated' ? (
-                        <div className="delivery-pending">
-                          <Clock size={12} />
-                          <span>配信待ち</span>
-                          <small>レポート生成済み</small>
-                        </div>
-                      ) : (
-                        <div className="delivery-none">
-                          <AlertTriangle size={12} />
-                          <span>未対応</span>
-                          <small>要アクション</small>
-                        </div>
-                      )}
+                  <td>
+                    <span className="plan-badge">スタンダード</span>
+                  </td>
+                  <td>
+                    <div className="system-status">
+                      <span 
+                        className={`status-indicator ${
+                          store.reportStatus === 'sent' ? 'healthy' :
+                          store.reportStatus === 'generated' ? 'warning' :
+                          store.reportStatus === 'draft' ? 'warning' :
+                          store.reportStatus === 'none' ? 'error' : 'unknown'
+                        }`}
+                        title={
+                          store.reportStatus === 'sent' ? 'レポートは正常に配信されています' :
+                          store.reportStatus === 'generated' ? 'レポートが生成済みです。配信をお待ちしています。' :
+                          store.reportStatus === 'draft' ? 'レポートが下書き状態です' :
+                          store.reportStatus === 'none' ? 'レポートがまだ生成されていません' :
+                          'レポート状態を取得できません'
+                        }
+                      >
+                        {store.reportStatus === 'sent' ? '🟢 配信済み' :
+                         store.reportStatus === 'generated' ? '🟡 未配信' :
+                         store.reportStatus === 'draft' ? '🟡 下書き' :
+                         store.reportStatus === 'none' ? '🔴 未生成' : '❓ 不明'}
+                      </span>
+                      <div className="status-details">
+                        <small>
+                          {store.reportStatus === 'sent' ? '配信完了' :
+                           store.reportStatus === 'generated' ? '配信待ち' :
+                           store.reportStatus === 'draft' ? '編集中' :
+                           store.reportStatus === 'none' ? '未作成' : '不明'}
+                        </small>
+                      </div>
                     </div>
                   </td>
-                  
-                  <td className="action-cell">
+                  <td>
+                    <div className="activity-info">
+                      <div className="last-login">
+                        {dataPeriod.period}
+                      </div>
+                      <div className="activity-summary">
+                        <small>
+                          {store.reportStatus !== 'none' ? 
+                            `${dataPeriod.range} | データ完整性: ${dataPeriod.completeness}%` : 
+                            'データ期間未設定'
+                          }
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="activity-info">
+                      <div className="last-login">
+                        {store.lastReportDate ? new Date(store.lastReportDate).toLocaleDateString('ja-JP') : '未配信'}
+                      </div>
+                      <div className="activity-summary">
+                        <small>
+                          {store.lastReportDate ? 
+                            `${Math.floor((Date.now() - new Date(store.lastReportDate)) / (1000 * 60 * 60 * 24))}日前 | 今月: レポート${store.reportStatus === 'sent' ? '1' : '0'}回配信` : 
+                            'レポート未配信'
+                          }
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
                     <div className="action-buttons">
                       <button 
-                        className="action-btn primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedStore(store.id);
-                        }}
-                        title="レポート詳細"
+                        className="action-btn primary" 
+                        title="レポート管理（詳細・編集）"
+                        onClick={() => setSelectedStore(store.id)}
                       >
                         <Eye size={14} />
-                        詳細
+                        管理
                       </button>
-                      <button 
-                        className="action-btn secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // 再生成機能
-                        }}
-                        title="レポート再生成"
-                      >
-                        <RefreshCw size={14} />
-                        再生成
-                      </button>
-                      {store.reportStatus === 'generated' && (
+                      
+                      {/* 最新レポート確認ボタン（レポートが存在する場合のみ） */}
+                      {store.reportStatus !== 'none' && (
                         <button 
-                          className="action-btn success"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // LINE送信機能
-                          }}
-                          title="LINE送信"
+                          className="action-btn secondary"
+                          onClick={() => handleViewLatestReport(store.id)}
+                          title="最新レポートを確認"
+                        >
+                          <FileText size={14} />
+                          最新
+                        </button>
+                      )}
+                      
+                      {store.reportStatus === 'sent' ? (
+                        <button 
+                          className="action-btn secondary"
+                          onClick={() => handleDownloadReport(store.id)}
+                          title="PDFダウンロード"
+                        >
+                          <Download size={14} />
+                          DL
+                        </button>
+                      ) : store.reportStatus === 'generated' ? (
+                        <button 
+                          className="action-btn send"
+                          onClick={() => handleSendReport(store.id)}
+                          title="レポートを配信"
                         >
                           <Send size={14} />
-                          送信
+                          配信
+                        </button>
+                      ) : (
+                        <button 
+                          className="action-btn warning"
+                          onClick={() => handleGenerateReport(store.id)}
+                          title="AIでレポート生成"
+                        >
+                          <Sparkles size={14} />
+                          生成
+                        </button>
+                      )}
+                      
+                      {store.reportStatus !== 'none' && (
+                        <button 
+                          className="action-btn danger"
+                          onClick={() => handleRegenerateReport(store.id)}
+                          title="再生成"
+                        >
+                          <RefreshCw size={14} />
+                          再生成
                         </button>
                       )}
                     </div>

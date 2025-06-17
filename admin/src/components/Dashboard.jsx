@@ -2,56 +2,131 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Store,
-  Users,
-  Calendar,
-  FileText,
-  TrendingUp,
-  TrendingDown,
+  AlertCircle,
   AlertTriangle,
   CheckCircle,
   XCircle,
-  BarChart3,
   RefreshCw,
   Clock,
-  Star,
-  Heart,
   Activity,
   Zap,
-  Target,
-  BookOpen,
   Database,
   Wifi,
   WifiOff,
-  HardDrive
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Shield,
+  Terminal,
+  DollarSign,
+  Bell,
+  Eye,
+  Settings
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const Dashboard = () => {
   const { api } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [apiStatus, setApiStatus] = useState({});
+  const [errorTrends, setErrorTrends] = useState([]);
+  const [criticalStores, setCriticalStores] = useState([]);
+  const [costData, setCostData] = useState({});
+  const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [hourlyData, setHourlyData] = useState([]);
-  const [storeHealth, setStoreHealth] = useState([]);
-  const [todoList, setTodoList] = useState([]);
-  const [favoriteStores, setFavoriteStores] = useState([]);
-  const [currentLayout, setCurrentLayout] = useState(null);
 
   // ローカル環境判定
   const isLocalEnv = window.location.hostname === 'localhost';
 
+  // レポート配信遅延チェック関数
+  const checkReportDeliveryDelays = async () => {
+    try {
+      const today = new Date();
+      const currentDay = today.getDate();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      // 毎月5日以降のみチェック
+      if (currentDay < 5) {
+        return [];
+      }
+      
+      // 前月の情報を計算
+      const lastMonth = new Date(currentYear, currentMonth - 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7); // YYYY-MM形式
+      const lastMonthName = `${lastMonth.getFullYear()}年${(lastMonth.getMonth() + 1).toString().padStart(2, '0')}月`;
+      
+      console.log(`📅 レポート配信遅延チェック: ${lastMonthName}分のレポート`);
+      
+      if (isLocalEnv) {
+        // ローカル環境でのモックデータ
+        const delayedStores = [
+          {
+            id: 'demo-store-003',
+            name: '串焼き専門店 炭火屋',
+            reportStatus: 'generated',
+            lastReportDate: null
+          },
+          {
+            id: 'demo-store-005',
+            name: '昭和レトロ居酒屋 のんべえ横丁',
+            reportStatus: 'none',
+            lastReportDate: null
+          }
+        ];
+        
+        return delayedStores.map((store, index) => ({
+          id: `report-delay-${store.id}`,
+          level: 'critical',
+          type: 'report_delay',
+          title: '📊 レポート配信期限超過',
+          message: `${store.name}の${lastMonthName}分レポートが未配信です（期限：毎月5日）`,
+          storeId: store.id,
+          storeName: store.name,
+          timestamp: new Date().toISOString(),
+          reportMonth: lastMonthStr,
+          reportStatus: store.reportStatus,
+          daysLate: currentDay - 5
+        }));
+      }
+      
+      // 本番環境での実装
+      const response = await api.get(`/reports/delivery-delays?month=${lastMonthStr}`);
+      if (response.data.success) {
+        return response.data.delayedStores.map(store => ({
+          id: `report-delay-${store.id}`,
+          level: 'critical',
+          type: 'report_delay',
+          title: '📊 レポート配信期限超過',
+          message: `${store.name}の${lastMonthName}分レポートが未配信です（期限：毎月5日）`,
+          storeId: store.id,
+          storeName: store.name,
+          timestamp: new Date().toISOString(),
+          reportMonth: lastMonthStr,
+          reportStatus: store.reportStatus,
+          daysLate: currentDay - 5
+        }));
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('レポート配信遅延チェックエラー:', error);
+      return [];
+    }
+  };
+
   useEffect(() => {
-    fetchDashboardStats();
+    fetchDashboardData();
     
     // リアルタイム更新（30秒間隔）
     let interval;
     if (autoRefresh) {
       interval = setInterval(() => {
-        fetchDashboardStats();
+        fetchDashboardData();
         setLastUpdated(new Date());
       }, 30000);
     }
@@ -61,184 +136,216 @@ const Dashboard = () => {
     };
   }, [autoRefresh]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
       // ローカル環境でのモックデータ
       if (isLocalEnv) {
-        console.log('🏠 ローカル環境：モック統計データを使用');
-        const mockStats = {
-          stores: { total: 12, active: 10 },
-          reservations: { today: 45 },
-          reports: { today: 3 }
+        console.log('🏠 ローカル環境：アラート中心のダッシュボードデータを使用');
+        
+        // レポート配信遅延チェック
+        const reportDelayAlerts = await checkReportDeliveryDelays();
+        
+        // 緊急アラート
+        const mockAlerts = [
+          ...reportDelayAlerts, // レポート配信遅延アラートを最優先で表示
+          {
+            id: 'alert-001',
+            level: 'critical',
+            type: 'api_error',
+            title: 'OpenAI API 接続エラー',
+            message: '昭和レトロ居酒屋 のんべえ横丁でAPIエラーが継続しています',
+            storeId: 'demo-store-004',
+            storeName: '昭和レトロ居酒屋 のんべえ横丁',
+            timestamp: new Date(Date.now() - 1800000).toISOString(),
+            count: 15
+          },
+          {
+            id: 'alert-002',
+            level: 'warning',
+            type: 'performance',
+            title: '応答時間の遅延',
+            message: '海鮮居酒屋 大漁丸でGoogle Calendar APIの応答が遅延しています',
+            storeId: 'demo-store-002',
+            storeName: '海鮮居酒屋 大漁丸',
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            responseTime: 4.2
+          },
+          {
+            id: 'alert-003',
+            level: 'warning',
+            type: 'rate_limit',
+            title: 'API使用量警告',
+            message: '居酒屋 花まる 渋谷店がOpenAI APIの使用量上限に近づいています',
+            storeId: 'demo-store-001',
+            storeName: '居酒屋 花まる 渋谷店',
+            timestamp: new Date(Date.now() - 7200000).toISOString(),
+            usage: 85
+          }
+        ];
+
+        // システム全体の健康状態
+        const mockSystemHealth = {
+          overall: 'warning',
+          totalStores: 5,
+          healthyStores: 2,
+          warningStores: 2,
+          criticalStores: 1,
+          uptime: 99.5,
+          avgResponseTime: 1.8,
+          errorRate: 3.2
         };
-        
-        // 時間帯別利用状況データ
-        const mockHourlyData = generateHourlyData();
-        
-        // 店舗別健康状態データ
-        const mockStoreHealth = generateStoreHealthData();
-        
-        // 今日やるべきことリスト
-        const mockTodoList = generateTodoList();
-        
-        // お気に入り店舗
-        const mockFavoriteStores = generateFavoriteStores();
-        
-        setStats(mockStats);
-        setHourlyData(mockHourlyData);
-        setStoreHealth(mockStoreHealth);
-        setTodoList(mockTodoList);
-        setFavoriteStores(mockFavoriteStores);
+
+        // API状態
+        const mockApiStatus = {
+          openai: { status: 'warning', uptime: 98.5, avgResponse: 1.2 },
+          line: { status: 'healthy', uptime: 99.9, avgResponse: 0.8 },
+          googleCalendar: { status: 'warning', uptime: 97.2, avgResponse: 3.5 },
+          database: { status: 'healthy', uptime: 99.95, avgResponse: 0.3 }
+        };
+
+        // エラートレンド（過去24時間）
+        const mockErrorTrends = Array.from({ length: 24 }, (_, i) => ({
+          hour: `${i}:00`,
+          errors: Math.floor(Math.random() * 10) + (i > 20 ? 10 : 0),
+          warnings: Math.floor(Math.random() * 15) + 5
+        }));
+
+        // 要対応店舗
+        const mockCriticalStores = [
+          {
+            id: 'demo-store-004',
+            name: '昭和レトロ居酒屋 のんべえ横丁',
+            status: 'critical',
+            issues: ['OpenAI API エラー', 'Google Calendar 接続失敗'],
+            lastActive: new Date(Date.now() - 86400000 * 30).toISOString(),
+            errorCount: 45
+          },
+          {
+            id: 'demo-store-003',
+            name: '串焼き専門店 炭火屋',
+            status: 'warning',
+            issues: ['LINE API 応答遅延'],
+            lastActive: new Date(Date.now() - 86400000 * 10).toISOString(),
+            errorCount: 12
+          }
+        ];
+
+        // コストデータ
+        const mockCostData = {
+          current: {
+            openai: 12450,
+            total: 15680,
+            projection: 47040 // 月末予測
+          },
+          usage: {
+            tokens: 1245000,
+            apiCalls: 15670,
+            avgCostPerStore: 3136
+          },
+          topSpenders: [
+            { name: '創作和食 風花', cost: 4560 },
+            { name: '海鮮居酒屋 大漁丸', cost: 3890 },
+            { name: '居酒屋 花まる 渋谷店', cost: 3230 }
+          ]
+        };
+
+        // 最近のエラーログ
+        const mockRecentLogs = [
+          {
+            id: 'log-001',
+            level: 'error',
+            message: 'OpenAI API connection timeout',
+            store: '昭和レトロ居酒屋 のんべえ横丁',
+            timestamp: new Date(Date.now() - 300000).toISOString()
+          },
+          {
+            id: 'log-002',
+            level: 'warning',
+            message: 'Rate limit approaching (450/500 requests)',
+            store: '居酒屋 花まる 渋谷店',
+            timestamp: new Date(Date.now() - 600000).toISOString()
+          }
+        ];
+
+        setAlerts(mockAlerts);
+        setSystemHealth(mockSystemHealth);
+        setApiStatus(mockApiStatus);
+        setErrorTrends(mockErrorTrends);
+        setCriticalStores(mockCriticalStores);
+        setCostData(mockCostData);
+        setRecentLogs(mockRecentLogs);
         setLoading(false);
         return;
       }
       
       // 本番API呼び出し
-      const response = await api.get('/dashboard/stats');
+      const response = await api.get('/dashboard/alerts');
       
       if (response.data.success) {
-        setStats(response.data.stats);
-      } else {
-        setError('統計データの取得に失敗しました');
+        setAlerts(response.data.alerts);
+        setSystemHealth(response.data.systemHealth);
+        setApiStatus(response.data.apiStatus);
+        setErrorTrends(response.data.errorTrends);
+        setCriticalStores(response.data.criticalStores);
+        setCostData(response.data.costData);
+        setRecentLogs(response.data.recentLogs);
       }
-    } catch (err) {
-      console.error('ダッシュボード統計取得エラー:', err);
-      setError('サーバーエラーが発生しました');
+    } catch (error) {
+      console.error('Dashboard alerts fetch error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // モックデータ生成関数
-  const generateHourlyData = () => {
-    const data = [];
-    const currentHour = new Date().getHours();
-    for (let i = 0; i < 24; i++) {
-      const hour = i < currentHour ? i : null;
-      if (hour !== null) {
-        data.push({
-          hour: `${hour}:00`,
-          chats: Math.floor(Math.random() * 50) + 10,
-          reservations: Math.floor(Math.random() * 15) + 2,
-          api_calls: Math.floor(Math.random() * 100) + 20
-        });
-      }
-    }
-    return data;
-  };
-
-  const generateStoreHealthData = () => {
-    const stores = [
-      '居酒屋 花まる 渋谷店', '海鮮居酒屋 大漁丸', '創作和食 風花', 
-      '串焼き専門店 炭火屋', '昭和レトロ居酒屋 のんべえ横丁'
-    ];
-    
-    return stores.map((name, index) => ({
-      id: index + 1,
-      name,
-      status: Math.random() > 0.8 ? 'warning' : 'healthy',
-      apiCalls: Math.floor(Math.random() * 1000) + 500,
-      errorRate: Math.random() * 5,
-      lastActive: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-      isFavorite: Math.random() > 0.6
-    }));
-  };
-
-  const generateTodoList = () => {
-    const todos = [
-      { id: 1, task: '月次レポート生成（居酒屋 花まる）', priority: 'high', dueTime: '14:00' },
-      { id: 2, task: 'APIキー更新確認', priority: 'medium', dueTime: '16:30' },
-      { id: 3, task: '週次バックアップ実行', priority: 'low', dueTime: '18:00' },
-      { id: 4, task: '新店舗設定完了確認', priority: 'high', dueTime: '明日 10:00' }
-    ];
-    
-    return todos.filter(() => Math.random() > 0.3);
-  };
-
-  const generateFavoriteStores = () => {
-    return [
-      { id: 1, name: '居酒屋 花まる 渋谷店', status: 'healthy', lastReport: '2時間前' },
-      { id: 3, name: '創作和食 風花', status: 'warning', lastReport: '1日前' }
-    ];
-  };
-
-  const toggleFavoriteStore = (storeId) => {
-    setStoreHealth(prev => prev.map(store => 
-      store.id === storeId 
-        ? { ...store, isFavorite: !store.isFavorite }
-        : store
-    ));
-  };
-
-  const getColorByType = (type) => {
-    switch (type) {
-      case 'blue': return 'var(--info-500)';
-      case 'green': return 'var(--success-500)';
-      case 'orange': return 'var(--warning-500)';
-      case 'purple': return 'var(--chart-purple)';
-      default: return 'var(--text-secondary)';
+  const getAlertIcon = (level) => {
+    switch (level) {
+      case 'critical':
+        return { icon: AlertCircle, color: 'var(--error-500)' };
+      case 'warning':
+        return { icon: AlertTriangle, color: 'var(--warning-500)' };
+      default:
+        return { icon: CheckCircle, color: 'var(--info-500)' };
     }
   };
 
-  const statCards = [
-    {
-      id: 'total_stores',
-      title: '総店舗数',
-      value: stats?.stores?.total || 0,
-      icon: Store,
-      color: 'blue',
-      trend: '+2 前月比',
-      trendType: 'up'
-    },
-    {
-      id: 'active_stores',
-      title: 'アクティブ店舗',
-      value: stats?.stores?.active || 0,
-      icon: CheckCircle,
-      color: 'green',
-      trend: `${stats?.stores?.total ? Math.round((stats.stores.active / stats.stores.total) * 100) : 0}%`,
-      trendType: 'neutral'
-    },
-    {
-      id: 'today_reservations',
-      title: '本日の予約',
-      value: stats?.reservations?.today || 0,
-      icon: Calendar,
-      color: 'orange',
-      trend: '+15%',
-      trendType: 'up'
-    },
-    {
-      id: 'today_reports',
-      title: '本日のレポート',
-      value: stats?.reports?.today || 0,
-      icon: FileText,
-      color: 'purple',
-      trend: '-5%',
-      trendType: 'down'
+  const getApiStatusIcon = (status) => {
+    switch (status) {
+      case 'healthy':
+        return { icon: CheckCircle, color: 'var(--success-500)' };
+      case 'warning':
+        return { icon: AlertTriangle, color: 'var(--warning-500)' };
+      case 'critical':
+        return { icon: XCircle, color: 'var(--error-500)' };
+      default:
+        return { icon: WifiOff, color: 'var(--text-secondary)' };
     }
-  ];
+  };
 
-  const alerts = [
-    {
-      id: 1,
-      type: 'warning',
-      icon: AlertTriangle,
-      title: 'API使用量注意',
-      message: 'OpenAI APIの月間使用量が80%に達しました',
-      time: '2時間前'
-    },
-    {
-      id: 2,
-      type: 'info',
-      icon: CheckCircle,
-      title: 'バックアップ完了',
-      message: '自動バックアップが正常に完了しました',
-      time: '6時間前'
+  const handleAlertClick = (alert) => {
+    if (alert.type === 'report_delay') {
+      navigate('/reports'); // レポート管理ページに遷移
+    } else if (alert.storeId) {
+      navigate('/stores'); // 店舗管理ページに遷移
     }
-  ];
+  };
+
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'logs':
+        navigate('/logs');
+        break;
+      case 'stores':
+        navigate('/stores');
+        break;
+      case 'system':
+        navigate('/system');
+        break;
+      default:
+        break;
+    }
+  };
 
   if (loading) {
     return (
@@ -249,394 +356,314 @@ const Dashboard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-error">
-        <AlertTriangle size={48} />
-        <h3>エラーが発生しました</h3>
-        <p>{error}</p>
-        <button onClick={fetchDashboardStats} className="retry-btn">
-          再試行
-        </button>
-      </div>
-    );
-  }
-
-  const handleLayoutChange = (newLayout) => {
-    setCurrentLayout(newLayout);
-    // ここで実際のレイアウト変更処理を実装
-    console.log('レイアウト変更:', newLayout);
-  };
-
-  const renderDashboardContent = () => {
-    // デフォルトレイアウト
-    return (
-      <>
-        {/* 統計サマリー（横一列） */}
-        <div className="dashboard-summary-bar">
-          <div className="summary-container">
-            <div className="summary-title">📊 本日のサマリー</div>
-            <div className="summary-stats">
-              {statCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div key={card.id} className="summary-stat-item">
-                    <Icon size={18} style={{ color: getColorByType(card.color) }} />
-                    <div className="stat-content">
-                      <span className="stat-value">{card.value.toLocaleString()}</span>
-                      <span className="stat-label">{card.title}</span>
-                    </div>
-                    <div className={`stat-trend ${card.trendType}`}>
-                      {card.trendType === 'up' && <TrendingUp size={12} />}
-                      {card.trendType === 'down' && <TrendingDown size={12} />}
-                      <span>{card.trend}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="summary-actions">
-              <span className="update-time">
-                <Clock size={14} />
-                {lastUpdated.toLocaleTimeString('ja-JP')}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* お気に入り店舗テーブル */}
-        <div className="favorite-stores-section">
-          <h2>⭐ お気に入り店舗</h2>
-          <div className="table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>店舗名</th>
-                  <th>ステータス</th>
-                  <th>最終レポート</th>
-                  <th>アクション</th>
-                </tr>
-              </thead>
-              <tbody>
-                {favoriteStores.map(store => (
-                  <tr key={store.id}>
-                    <td>
-                      <div className="store-name-cell">
-                        <Store size={16} />
-                        <span>{store.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${store.status}`}>
-                        {store.status === 'healthy' ? <Wifi size={12} /> : <WifiOff size={12} />}
-                        {store.status === 'healthy' ? '正常' : '注意'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="time-cell">{store.lastReport}</span>
-                    </td>
-                    <td>
-                      <button 
-                        className="btn-sm primary"
-                        onClick={() => navigate('/stores')}
-                      >
-                        管理
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {favoriteStores.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="empty-state-cell">
-                      <div className="empty-favorites">
-                        <Star size={32} />
-                        <p>お気に入り店舗がありません</p>
-                        <button onClick={() => window.location.href = '/stores'}>
-                          店舗をお気に入りに追加
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 今日やるべきことテーブル */}
-        <div className="todo-section">
-          <h2>📋 今日やるべきこと</h2>
-          <div className="table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>タスク</th>
-                  <th>優先度</th>
-                  <th>期限</th>
-                  <th>アクション</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todoList.map(todo => (
-                  <tr key={todo.id} className={`todo-row priority-${todo.priority}`}>
-                    <td>
-                      <div className="task-cell">
-                        <span className="todo-task">{todo.task}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className={`priority-badge ${todo.priority}`}>
-                        {todo.priority === 'high' && <Zap size={12} />}
-                        {todo.priority === 'medium' && <Target size={12} />}
-                        {todo.priority === 'low' && <BookOpen size={12} />}
-                        <span>{todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="time-cell">
-                        <Clock size={12} />
-                        <span>{todo.dueTime}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <button className="btn-sm secondary">
-                        完了
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {todoList.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="empty-state-cell">
-                      <div className="empty-todos">
-                        <CheckCircle size={32} />
-                        <p>今日のタスクはすべて完了しています！</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 時間帯別利用状況グラフ */}
-        <div className="hourly-chart-section">
-          <h2>📊 時間帯別利用状況</h2>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="chats" 
-                  stroke="var(--info-500)" 
-                  strokeWidth={2}
-                  name="チャット数"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="reservations" 
-                  stroke="var(--success-500)" 
-                  strokeWidth={2}
-                  name="予約数"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="api_calls" 
-                  stroke="var(--warning-500)" 
-                  strokeWidth={2}
-                  name="API呼び出し"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* 店舗別健康状態テーブル */}
-        <div className="store-health-section">
-          <h2>🏥 店舗別健康状態</h2>
-          <div className="table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>店舗名</th>
-                  <th>ステータス</th>
-                  <th>API呼び出し</th>
-                  <th>エラー率</th>
-                  <th>最終活動</th>
-                  <th>お気に入り</th>
-                  <th>アクション</th>
-                </tr>
-              </thead>
-              <tbody>
-                {storeHealth.map(store => (
-                  <tr key={store.id} className={`store-health-row ${store.status}`}>
-                    <td>
-                      <div className="store-name-cell">
-                        <Store size={16} />
-                        <span>{store.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${store.status}`}>
-                        {store.status === 'healthy' ? <Activity size={16} /> : <AlertTriangle size={16} />}
-                        {store.status === 'healthy' ? '正常' : '注意'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="metric-value">{store.apiCalls.toLocaleString()}</span>
-                    </td>
-                    <td>
-                      <span className={`error-rate ${store.errorRate > 2 ? 'high' : 'normal'}`}>
-                        {store.errorRate.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td>
-                      <div className="time-cell">
-                        <Clock size={12} />
-                        <span>{new Date(store.lastActive).toLocaleTimeString('ja-JP')}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <button
-                        className={`favorite-btn ${store.isFavorite ? 'active' : ''}`}
-                        onClick={() => toggleFavoriteStore(store.id)}
-                      >
-                        <Heart size={16} fill={store.isFavorite ? 'currentColor' : 'none'} />
-                      </button>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button className="btn-sm primary" onClick={() => window.location.href = '/stores'}>
-                          詳細
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* システム通知テーブル */}
-        <div className="alerts-section">
-          <h2>📋 システム通知</h2>
-          <div className="table-container">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>タイプ</th>
-                  <th>タイトル</th>
-                  <th>メッセージ</th>
-                  <th>時刻</th>
-                  <th>アクション</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.map((alert) => {
-                  const Icon = alert.icon;
-                  return (
-                    <tr key={alert.id} className={`alert-row ${alert.type}`}>
-                      <td>
-                        <div className={`alert-type-cell ${alert.type}`}>
-                          <Icon size={16} />
-                          <span>{alert.type === 'warning' ? '警告' : '情報'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="alert-title">{alert.title}</span>
-                      </td>
-                      <td>
-                        <span className="alert-message">{alert.message}</span>
-                      </td>
-                      <td>
-                        <div className="time-cell">
-                          <Clock size={12} />
-                          <span>{alert.time}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <button className="btn-sm secondary">対応</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* クイックアクション */}
-        <div className="quick-actions-section">
-          <h2>🚀 クイックアクション</h2>
-          <div className="action-grid">
-            <button className="action-card primary" onClick={() => window.location.href = '/stores'}>
-              <Store size={24} />
-              <span>新店舗追加</span>
-            </button>
-            <button className="action-card secondary" onClick={() => navigate('/reports')}>
-              <FileText size={24} />
-              <span>レポート一括生成</span>
-            </button>
-            <button className="action-card secondary" onClick={() => navigate('/backup')}>
-              <HardDrive size={24} />
-              <span>バックアップ作成</span>
-            </button>
-            <button className="action-card secondary" onClick={() => navigate('/revenue')}>
-              <TrendingUp size={24} />
-              <span>収益分析表示</span>
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  };
-
-  // const renderSection = (section) => {
-  //   return (
-  //     <div key={section.id} className={`dashboard-section ${section.size}`}>
-  //       <h2>{section.title}</h2>
-  //       <div>セクション内容: {section.type}</div>
-  //     </div>
-  //   );
-  // };
-
   return (
     <div className="dashboard">
       <div className="dashboard-header">
         <div className="header-content">
-          <h1>本日のサービス状況</h1>
-          <p>全店舗の運営状況を一元管理</p>
+          <h1>🚨 システム監視ダッシュボード</h1>
+          <p>リアルタイムアラートとシステム状態の監視</p>
         </div>
-        <div className="header-controls">
-          <div className="last-updated">
-            <Clock size={16} />
-            最終更新: {lastUpdated.toLocaleTimeString('ja-JP')}
-          </div>
-          <button
-            className={`auto-refresh-btn ${autoRefresh ? 'active' : ''}`}
+        <div className="header-actions">
+          <button 
+            className={`refresh-btn ${autoRefresh ? 'active' : ''}`}
             onClick={() => setAutoRefresh(!autoRefresh)}
           >
             <RefreshCw size={16} className={autoRefresh ? 'spin' : ''} />
-            自動更新: {autoRefresh ? 'ON' : 'OFF'}
+            自動更新
           </button>
-          <button
-            className="manual-refresh-btn"
-            onClick={fetchDashboardStats}
-            disabled={loading}
+          <span className="last-update">
+            <Clock size={14} />
+            {lastUpdated.toLocaleTimeString('ja-JP')}
+          </span>
+        </div>
+      </div>
+
+      {/* 緊急アラートセクション */}
+      <div className="alert-section">
+        <div className="section-header">
+          <h2>🚨 緊急アラート</h2>
+          {alerts.length > 0 && (
+            <span className="alert-count">{alerts.length}件の問題</span>
+          )}
+        </div>
+        
+        {alerts.length === 0 ? (
+          <div className="no-alerts">
+            <CheckCircle size={48} style={{ color: 'var(--success-500)' }} />
+            <h3>問題は検出されていません</h3>
+            <p>すべてのシステムが正常に動作しています</p>
+          </div>
+        ) : (
+          <div className="alerts-grid">
+            {alerts.map(alert => {
+              const alertInfo = getAlertIcon(alert.level);
+              const AlertIcon = alertInfo.icon;
+              
+              return (
+                <div 
+                  key={alert.id} 
+                  className={`alert-card ${alert.level}`}
+                  onClick={() => handleAlertClick(alert)}
+                >
+                  <div className="alert-header">
+                    <AlertIcon size={20} style={{ color: alertInfo.color }} />
+                    <span className="alert-time">
+                      {Math.floor((Date.now() - new Date(alert.timestamp)) / 60000)}分前
+                    </span>
+                  </div>
+                  <h3>{alert.title}</h3>
+                  <p>{alert.message}</p>
+                  <div className="alert-meta">
+                    <span className="store-name">{alert.storeName}</span>
+                    <ArrowRight size={14} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="dashboard-grid">
+        {/* システム全体ヘルス */}
+        <div className="health-card">
+          <h3>📊 システム全体ヘルス</h3>
+          <div className="health-overview">
+            <div className="health-pie">
+              <PieChart width={120} height={120}>
+                <Pie
+                  data={[
+                    { name: 'healthy', value: systemHealth?.healthyStores || 0, color: 'var(--success-500)' },
+                    { name: 'warning', value: systemHealth?.warningStores || 0, color: 'var(--warning-500)' },
+                    { name: 'critical', value: systemHealth?.criticalStores || 0, color: 'var(--error-500)' }
+                  ]}
+                  cx={60}
+                  cy={60}
+                  innerRadius={25}
+                  outerRadius={50}
+                  dataKey="value"
+                >
+                  {[
+                    { name: 'healthy', value: systemHealth?.healthyStores || 0, color: 'var(--success-500)' },
+                    { name: 'warning', value: systemHealth?.warningStores || 0, color: 'var(--warning-500)' },
+                    { name: 'critical', value: systemHealth?.criticalStores || 0, color: 'var(--error-500)' }
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </div>
+            <div className="health-stats">
+              <div className="stat">
+                <span className="value">{systemHealth?.totalStores || 0}</span>
+                <span className="label">総店舗</span>
+              </div>
+              <div className="stat critical">
+                <span className="value">{systemHealth?.criticalStores || 0}</span>
+                <span className="label">要対応</span>
+              </div>
+              <div className="stat warning">
+                <span className="value">{systemHealth?.warningStores || 0}</span>
+                <span className="label">確認推奨</span>
+              </div>
+            </div>
+          </div>
+          <div className="health-metrics">
+            <div className="metric">
+              <span>稼働率</span>
+              <span className="value">{systemHealth?.uptime || 0}%</span>
+            </div>
+            <div className="metric">
+              <span>エラー率</span>
+              <span className="value">{systemHealth?.errorRate || 0}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* API状態 */}
+        <div className="api-status-card">
+          <h3>🔗 API状態監視</h3>
+          <div className="api-grid">
+            {Object.entries(apiStatus).map(([api, status]) => {
+              const statusInfo = getApiStatusIcon(status.status);
+              const StatusIcon = statusInfo.icon;
+              
+              return (
+                <div key={api} className={`api-item ${status.status}`}>
+                  <div className="api-header">
+                    <StatusIcon size={16} style={{ color: statusInfo.color }} />
+                    <span className="api-name">
+                      {api === 'openai' ? 'OpenAI' :
+                       api === 'line' ? 'LINE' :
+                       api === 'googleCalendar' ? 'Calendar' :
+                       api === 'database' ? 'Database' : api}
+                    </span>
+                  </div>
+                  <div className="api-metrics">
+                    <div className="metric">
+                      <span>稼働率</span>
+                      <span>{status.uptime}%</span>
+                    </div>
+                    <div className="metric">
+                      <span>応答</span>
+                      <span>{status.avgResponse}s</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* エラートレンド */}
+        <div className="trend-card">
+          <h3>📈 エラートレンド (24時間)</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={errorTrends}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" />
+                <YAxis />
+                <Tooltip />
+                <Area 
+                  type="monotone" 
+                  dataKey="errors" 
+                  stackId="1"
+                  stroke="var(--error-500)" 
+                  fill="var(--error-500)" 
+                  fillOpacity={0.6}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="warnings" 
+                  stackId="1"
+                  stroke="var(--warning-500)" 
+                  fill="var(--warning-500)" 
+                  fillOpacity={0.6}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 要対応店舗 */}
+        <div className="critical-stores-card">
+          <h3>⚠️ 要対応店舗</h3>
+          {criticalStores.length === 0 ? (
+            <div className="no-critical">
+              <CheckCircle size={32} style={{ color: 'var(--success-500)' }} />
+              <p>要対応の店舗はありません</p>
+            </div>
+          ) : (
+            <div className="stores-list">
+              {criticalStores.map(store => (
+                <div key={store.id} className={`store-item ${store.status}`}>
+                  <div className="store-header">
+                    <span className="store-name">{store.name}</span>
+                    <span className="error-count">{store.errorCount}件</span>
+                  </div>
+                  <div className="store-issues">
+                    {store.issues.map((issue, index) => (
+                      <span key={index} className="issue-tag">{issue}</span>
+                    ))}
+                  </div>
+                  <div className="store-meta">
+                    <span>最終活動: {Math.floor((Date.now() - new Date(store.lastActive)) / 86400000)}日前</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* コスト監視 */}
+        <div className="cost-card">
+          <h3>💰 コスト監視</h3>
+          <div className="cost-overview">
+            <div className="cost-current">
+              <span className="cost-label">今月の使用量</span>
+              <span className="cost-value">¥{costData.current?.total?.toLocaleString() || 0}</span>
+            </div>
+            <div className="cost-projection">
+              <span className="cost-label">月末予測</span>
+              <span className="cost-value projection">¥{costData.current?.projection?.toLocaleString() || 0}</span>
+            </div>
+          </div>
+          <div className="cost-details">
+            <div className="cost-metric">
+              <span>OpenAI API</span>
+              <span>¥{costData.current?.openai?.toLocaleString() || 0}</span>
+            </div>
+            <div className="cost-metric">
+              <span>API呼び出し</span>
+              <span>{costData.usage?.apiCalls?.toLocaleString() || 0}回</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 最近のログ */}
+        <div className="recent-logs-card">
+          <h3>📋 最近のエラーログ</h3>
+          {recentLogs.length === 0 ? (
+            <div className="no-logs">
+              <Terminal size={32} style={{ color: 'var(--text-secondary)' }} />
+              <p>最近のエラーはありません</p>
+            </div>
+          ) : (
+            <div className="logs-list">
+              {recentLogs.map(log => (
+                <div key={log.id} className={`log-item ${log.level}`}>
+                  <div className="log-header">
+                    <span className="log-time">
+                      {Math.floor((Date.now() - new Date(log.timestamp)) / 60000)}分前
+                    </span>
+                    <span className="log-store">{log.store}</span>
+                  </div>
+                  <p className="log-message">{log.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <button 
+            className="view-all-logs"
+            onClick={() => handleQuickAction('logs')}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} />
-            更新
+            <Terminal size={14} />
+            すべてのログを表示
           </button>
         </div>
       </div>
 
-      {renderDashboardContent()}
+      {/* クイックアクション */}
+      <div className="quick-actions">
+        <h3>⚡ クイックアクション</h3>
+        <div className="actions-grid">
+          <button 
+            className="action-btn"
+            onClick={() => handleQuickAction('stores')}
+          >
+            <Shield size={20} />
+            店舗管理
+            <span>システム状態確認</span>
+          </button>
+          <button 
+            className="action-btn"
+            onClick={() => handleQuickAction('logs')}
+          >
+            <Terminal size={20} />
+            ログ分析
+            <span>詳細エラー調査</span>
+          </button>
+          <button 
+            className="action-btn"
+            onClick={() => handleQuickAction('system')}
+          >
+            <Settings size={20} />
+            システム設定
+            <span>システム管理</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

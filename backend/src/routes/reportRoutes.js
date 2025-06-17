@@ -2,6 +2,7 @@
 import express from 'express';
 import pool from '../config/db.js';
 import OpenAI from 'openai';
+import { generateMonthlyReportsForAllStores } from '../services/reportScheduler.js';
 
 const router = express.Router();
 const openai = new OpenAI();
@@ -817,5 +818,67 @@ const getChartData = async (storeId, reportMonth) => {
         client.release();
     }
 };
+
+/**
+ * 手動で全店舗の月次レポート自動生成をトリガー（テスト用）
+ * POST /api/reports/trigger-auto-generation
+ */
+router.post('/trigger-auto-generation', async (req, res) => {
+    console.log('🔄 手動トリガー: 全店舗月次レポート自動生成');
+    
+    try {
+        // 非同期で実行（時間がかかるため）
+        generateMonthlyReportsForAllStores()
+            .then(() => {
+                console.log('✅ 手動トリガーによる自動生成が完了しました');
+            })
+            .catch((error) => {
+                console.error('❌ 手動トリガーによる自動生成でエラー:', error);
+            });
+        
+        res.status(200).json({
+            message: '全店舗の月次レポート自動生成を開始しました。処理はバックグラウンドで実行されます。',
+            startedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ 自動生成トリガーエラー:', error);
+        res.status(500).json({ error: 'サーバー内部でエラーが発生しました。' });
+    }
+});
+
+/**
+ * 自動生成実行ログを取得
+ * GET /api/reports/auto-generation-logs
+ */
+router.get('/auto-generation-logs', async (req, res) => {
+    console.log('🔄 自動生成実行ログ取得リクエスト');
+    
+    try {
+        const query = `
+            SELECT 
+                id,
+                report_month,
+                total_stores,
+                success_count,
+                failed_count,
+                skipped_count,
+                duration_seconds,
+                error_details,
+                executed_at,
+                created_at
+            FROM report_auto_generation_logs
+            ORDER BY executed_at DESC
+            LIMIT 20
+        `;
+        
+        const result = await pool.query(query);
+        
+        console.log(`✅ ${result.rows.length}件の自動生成ログを取得しました`);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('❌ 自動生成ログ取得エラー:', error);
+        res.status(500).json({ error: 'サーバー内部でエラーが発生しました。' });
+    }
+});
 
 export default router;

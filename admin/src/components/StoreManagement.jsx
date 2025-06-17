@@ -78,7 +78,7 @@ const StoreManagement = () => {
               systemUptime: 0.999,
               apiCallsToday: 156,
               errorsToday: 3
-            }
+            },
           },
           {
             id: 'demo-store-002',
@@ -106,7 +106,7 @@ const StoreManagement = () => {
               systemUptime: 0.987,
               apiCallsToday: 89,
               errorsToday: 7
-            }
+            },
           },
           {
             id: 'demo-store-003',
@@ -134,7 +134,7 @@ const StoreManagement = () => {
               systemUptime: 0.978,
               apiCallsToday: 23,
               errorsToday: 5
-            }
+            },
           },
           {
             id: 'demo-store-004',
@@ -199,7 +199,7 @@ const StoreManagement = () => {
               systemUptime: 0.9995,
               apiCallsToday: 234,
               errorsToday: 1
-            }
+            },
           }
         ];
         setStores(demoStores);
@@ -483,7 +483,7 @@ const StoreManagement = () => {
                   <td>
                     <div className="store-info">
                       <Store size={16} />
-                      <div>
+                      <div className="store-content">
                         <div className="store-name">{store.name}</div>
                         <div className="store-details">
                           <MapPin size={12} />

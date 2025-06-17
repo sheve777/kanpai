@@ -18,6 +18,7 @@ import {
 
 // Import tab components
 import BasicInfoTab from './BasicInfoTab';
+import ReservationTab from './ReservationTab';
 import LineSettingsTab from './LineSettingsTab';
 import GoogleSettingsTab from './GoogleSettingsTab';
 import AISettingsTab from './AISettingsTab';
@@ -41,6 +42,7 @@ const StoreDetail = ({ storeId, onBack }) => {
   // Tab configuration
   const tabs = [
     { id: 'basic', label: '基本情報', icon: Store },
+    { id: 'reservation', label: '予約システム', icon: Calendar },
     { id: 'richmenu', label: 'リッチメニュー', icon: Smartphone },
     { id: 'line', label: 'LINE設定', icon: MessageSquare },
     { id: 'google', label: 'Google設定', icon: Calendar },
@@ -79,18 +81,19 @@ const StoreDetail = ({ storeId, onBack }) => {
             webhookUrl: 'https://kanpai-plus.jp/api/line/webhook'
           },
           richMenu: {
+            layout: '2x3',
             design: {
               backgroundColor: '#D2691E',
               textColor: '#FFFFFF',
               accentColor: '#FFD700'
             },
             buttons: [
-              { id: 'reserve', text: '予約する', icon: '🍽️', businessHoursBehavior: { during: 'chatbot', outside: 'webform' } },
+              { id: 'reserve', text: '予約する', icon: '🍽️', reservationType: 'chatbot' },
               { id: 'chat', text: 'チャット', icon: '💬' },
               { id: 'menu', text: 'メニュー', icon: '📋', menuPdf: 'menu_2024.pdf' },
-              { id: 'access', text: 'アクセス', icon: '🗺️' },
-              { id: 'phone', text: '電話', icon: '📞' },
-              { id: 'news', text: 'お知らせ', icon: '📢' }
+              { id: 'access', text: 'アクセス', icon: '🗺️', address: '東京都渋谷区渋谷1-1-1' },
+              { id: 'phone', text: '電話', icon: '📞', phoneNumber: '03-1234-5678' },
+              { id: 'news', text: 'お知らせ', icon: '📢', newsUrl: 'https://example.com/news' }
             ],
             analytics: {
               totalClicks: 1234,
@@ -161,6 +164,28 @@ const StoreDetail = ({ storeId, onBack }) => {
             nextBillingDate: '2025-01-01',
             paymentMethod: 'credit_card',
             cardLast4: '1234'
+          },
+          reservationSettings: {
+            tableSeats: 32,
+            tableSeatTypes: [
+              { size: 2, count: 4, minPeople: 1 },  // 2人がけテーブル×4（1人から利用可）
+              { size: 4, count: 6, minPeople: 2 },  // 4人がけテーブル×6（2人から利用可）
+              { size: 6, count: 1, minPeople: 4 }   // 6人がけテーブル×1（4人から利用可）
+            ],
+            counterSeats: 8,
+            reservableTableCount: 8, // 予約可能なテーブル数（11テーブル中8テーブル）
+            reservableCounterSeats: 6, // 予約可能なカウンター席数
+            defaultDuration: 120,
+            counterSpacing: 1,
+            timeSlots: 30,
+            openingTime: '17:00',
+            closingTime: '01:00',
+            lastOrder: '00:30',
+            maxPartySize: 8,
+            advanceBookingDays: 30,
+            cancellationDeadline: 2, // 何時間前まで
+            availableDays: [1, 2, 3, 4, 5, 6, 0], // 0=日曜, 1=月曜...
+            allowSameDayBooking: true // 当日予約を受け付けるか
           }
         };
         
@@ -288,6 +313,15 @@ const StoreDetail = ({ storeId, onBack }) => {
           <BasicInfoTab
             data={editedData.basicInfo}
             onInputChange={handleInputChange}
+            onSave={handleSave}
+            saving={saving}
+          />
+        );
+      case 'reservation':
+        return (
+          <ReservationTab
+            data={editedData.reservationSettings}
+            onDataChange={handleInputChange}
             onSave={handleSave}
             saving={saving}
           />

@@ -25,6 +25,7 @@ import { testDbConnection } from './config/db.js';
 import logger from './utils/logger.js';
 import globalErrorHandler, { notFound } from './middlewares/errorHandler.js';
 import { generalLimiter, authLimiter, apiLimiter } from './middlewares/rateLimiter.js';
+import { startReportScheduler } from './services/reportScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,6 +131,9 @@ const startServer = async () => {
   const server = app.listen(port, () => { 
     logger.info(`サーバーがポート${port}で起動しました。 http://localhost:${port}`);
     logger.info(`📁 静的ファイルを配信中: ${publicPath}`);
+    
+    // 月次レポート自動生成スケジューラーを開始
+    startReportScheduler();
   });
 
   // Graceful shutdown

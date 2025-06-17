@@ -24,7 +24,7 @@ import {
   Store
 } from 'lucide-react';
 
-const ReportManagementDetail = ({ storeId, onBack }) => {
+const ReportManagementDetail = ({ storeId, showLatestReport = false, onBack }) => {
   const { api } = useAuth();
   const [reports, setReports] = useState([]);
   const [storeInfo, setStoreInfo] = useState(null);
@@ -44,6 +44,26 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
     fetchReports();
     fetchStoreInfo();
   }, [selectedMonth, storeId]);
+
+  // 最新レポートを自動選択する関数
+  const selectLatestReport = (reportList) => {
+    if (reportList.length > 0) {
+      // 最新のレポート（配信済み > 生成済み > 下書きの順で優先）
+      const priorityOrder = { 'sent': 3, 'generated': 2, 'draft': 1 };
+      const sortedReports = [...reportList].sort((a, b) => {
+        // まず優先度で並び替え
+        const priorityDiff = (priorityOrder[b.status] || 0) - (priorityOrder[a.status] || 0);
+        if (priorityDiff !== 0) return priorityDiff;
+        
+        // 次に生成日で並び替え
+        return new Date(b.generatedAt) - new Date(a.generatedAt);
+      });
+      
+      const latestReport = sortedReports[0];
+      console.log('🔍 最新レポートを自動選択:', latestReport.id);
+      setViewingReport(latestReport.id);
+    }
+  };
 
   const fetchStoreInfo = async () => {
     try {
@@ -206,6 +226,12 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
         // 指定されたstoreIdのレポートのみをフィルタリング
         const filteredReports = allMockReports.filter(report => report.storeId === storeId);
         setReports(filteredReports);
+        
+        // 最新レポート表示フラグが立っている場合は自動選択
+        if (showLatestReport) {
+          selectLatestReport(filteredReports);
+        }
+        
         setLoading(false);
         return;
       }
@@ -214,6 +240,11 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
       const response = await api.get(`/reports?month=${selectedMonth}&storeId=${storeId}`);
       if (response.data.success) {
         setReports(response.data.reports);
+        
+        // 最新レポート表示フラグが立っている場合は自動選択
+        if (showLatestReport) {
+          selectLatestReport(response.data.reports);
+        }
       }
     } catch (error) {
       console.error('レポート取得エラー:', error);
@@ -255,6 +286,18 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
   };
 
   const handleSendReport = async (reportId) => {
+    // 配信前の確認ダイアログ
+    const report = reports.find(r => r.id === reportId);
+    const storeName = storeInfo?.name || '店舗';
+    const reportMonth = report?.month?.replace('-', '年') + '月' || '該当月';
+    
+    const confirmMessage = `📤 レポート配信確認\n\n以下のレポートをLINEで配信しますか？\n\n店舗: ${storeName}\n対象月: ${reportMonth}\n\n配信後は顧客に自動送信されます。\n本当に配信しますか？`;
+    
+    if (!window.confirm(confirmMessage)) {
+      console.log('❌ レポート配信をキャンセルしました');
+      return;
+    }
+    
     try {
       setSending(true);
       
@@ -469,7 +512,7 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
           <table className="reports-table">
             <thead>
               <tr>
-                <th>店舗名</th>
+                <th>レポート期間</th>
                 <th>ステータス</th>
                 <th>営業実績</th>
                 <th>顧客分析</th>
@@ -487,9 +530,18 @@ const ReportManagementDetail = ({ storeId, onBack }) => {
                 return (
                   <tr key={report.id}>
                     <td>
-                      <div className="store-name-cell">
-                        <FileText size={16} />
-                        <span>{report.storeName}</span>
+                      <div className="report-period-cell">
+                        <Calendar size={16} />
+                        <div className="period-info">
+                          <span className="period-main">{report.month.replace('-', '年')}月</span>
+                          <small className="period-detail">
+                            {(() => {
+                              const [year, month] = report.month.split('-');
+                              const endDate = new Date(parseInt(year), parseInt(month), 0).getDate();
+                              return `${month}/1 - ${month}/${endDate}`;
+                            })()}
+                          </small>
+                        </div>
                       </div>
                     </td>
                     <td>
