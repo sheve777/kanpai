@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import MenuManagementPanel from './MenuManagementPanel';
 import {
   X,
   Store,
@@ -18,7 +19,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Menu,
+  Edit
 } from 'lucide-react';
 
 const StoreDetailModal = ({ isOpen, onClose, storeId, mode = 'view' }) => {
@@ -218,14 +221,21 @@ const StoreDetailModal = ({ isOpen, onClose, storeId, mode = 'view' }) => {
     }));
   };
 
+  // タブ定義 - 2025-01-19 更新
   const tabs = [
     { id: 'basic', label: '基本情報', icon: Store },
+    { id: 'menus', label: 'メニュー管理', icon: Menu },
     { id: 'line', label: 'LINE設定', icon: MessageSquare },
     { id: 'google', label: 'Google設定', icon: Calendar },
     { id: 'ai', label: 'AI設定', icon: Brain },
     { id: 'usage', label: '利用状況', icon: CreditCard },
     { id: 'security', label: 'セキュリティ', icon: Shield }
   ];
+
+  // デバッグ用ログ出力
+  console.log('🔍 StoreDetailModal - tabs定義:', tabs);
+  console.log('🔍 StoreDetailModal - activeTab:', activeTab);
+  console.log('🔍 StoreDetailModal - isOpen:', isOpen);
 
   if (!isOpen) return null;
 
@@ -321,6 +331,14 @@ const StoreDetailModal = ({ isOpen, onClose, storeId, mode = 'view' }) => {
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Menu Management Tab */}
+              {activeTab === 'menus' && (
+                <div className="tab-content">
+                  <h3>メニュー管理</h3>
+                  <MenuManagementPanel storeId={storeId} />
                 </div>
               )}
 

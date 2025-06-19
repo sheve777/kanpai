@@ -211,6 +211,56 @@ Set `DEMO_MODE=true` in `.env` file. The system automatically falls back to demo
 
 ## Key Development Notes
 
+### Menu Management System - Critical Data Synchronization
+The menu management system implements **bidirectional real-time synchronization** between frontend and admin dashboard, which is **ESSENTIAL** for proper restaurant operations:
+
+#### 🔄 Bidirectional Data Flow
+- **Admin Dashboard Changes** → **Customer Frontend**: Menu updates immediately reflect in customer-facing interface
+- **Customer Frontend Changes** → **Admin Dashboard**: Real-time updates visible in management interface
+- **Single Source of Truth**: Both interfaces use identical API endpoints (`/api/stores/:storeId/menus`)
+
+#### 📊 Shared Database Schema
+```sql
+menus table:
+- id (Primary Key)
+- store_id (Store ID for multi-tenant isolation)  
+- name (Menu item name)
+- category (Standardized categories with icons)
+- price (Price in yen)
+- description (Optional description)
+- is_recommended (Recommendation flag)
+- is_available (Availability flag)
+- created_at, updated_at (Timestamps)
+```
+
+#### 🎯 Critical Use Cases
+1. **Bulk Menu Updates**: Admin can import/export JSON for seasonal menu changes
+2. **Real-time Price Changes**: Staff can update prices from either interface immediately
+3. **Availability Management**: Sold-out items can be disabled from either side
+4. **Category Consistency**: Both interfaces share identical category mapping with emojis
+
+#### ⚠️ Development Requirements
+- **NEVER** create separate menu storage systems
+- **ALWAYS** maintain category consistency between frontend and admin
+- **ENSURE** API endpoints remain synchronized
+- **TEST** bidirectional updates in both local and production environments
+
+#### 📱 Category Standard (Must be identical across all interfaces)
+```javascript
+const categoryIcons = {
+  'ドリンク': '🍺',     // Drinks
+  '揚げ物': '🍤',       // Fried foods  
+  '焼き鳥': '🍗',       // Yakitori
+  '刺身': '🐟',         // Sashimi
+  'サラダ': '🥗',       // Salads
+  'ご飯物': '🍚',       // Rice dishes
+  'デザート': '🍮',     // Desserts
+  'おつまみ': '🥜',     // Appetizers/Snacks
+  '麺類': '🍜',         // Noodles
+  '鍋料理': '🍲'        // Hot pot dishes
+};
+```
+
 ### Store Setup Wizard
 Recent implementation includes a comprehensive 5-step store setup wizard in the admin dashboard:
 1. **Basic Info**: Store details, operating hours, subscription plan selection

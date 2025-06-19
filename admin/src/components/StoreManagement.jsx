@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import StoreWizard from './StoreWizard';
-import StoreDetailModal from './StoreDetailModal';
 import StoreDetail from './StoreDetail/index';
 import {
   Search,
@@ -32,7 +31,6 @@ const StoreManagement = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showStoreWizard, setShowStoreWizard] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
-  const [detailModalMode, setDetailModalMode] = useState('view');
   const [showDetailPage, setShowDetailPage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [storeToDelete, setStoreToDelete] = useState(null);
@@ -577,7 +575,7 @@ const StoreManagement = () => {
                     <div className="action-buttons">
                       <button 
                         className="action-btn primary" 
-                        title="店舗管理（詳細・編集）"
+                        title="店舗管理（詳細・編集・メニュー管理）"
                         onClick={() => handleManageStore(store)}
                       >
                         <Edit size={14} />
@@ -627,16 +625,6 @@ const StoreManagement = () => {
         }}
       />
 
-      {/* Store Detail Modal */}
-      <StoreDetailModal
-        isOpen={selectedStore !== null}
-        onClose={() => {
-          setSelectedStore(null);
-          fetchStores(); // 変更を反映
-        }}
-        storeId={selectedStore}
-        mode={detailModalMode}
-      />
 
       {/* Troubleshoot Dialog */}
       {showTroubleshootDialog && troubleshootStore && (

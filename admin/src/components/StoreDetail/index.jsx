@@ -13,7 +13,8 @@ import {
   CreditCard,
   Shield,
   BarChart3,
-  Smartphone
+  Smartphone,
+  Menu
 } from 'lucide-react';
 
 // Import tab components
@@ -26,6 +27,7 @@ import UsageTab from './UsageTab';
 import ReportsTab from './ReportsTab';
 import BillingTab from './BillingTab';
 import RichMenuTab from './RichMenuTab';
+import MenuManagementPanel from '../MenuManagementPanel';
 
 const StoreDetail = ({ storeId, onBack }) => {
   const { api } = useAuth();
@@ -42,13 +44,13 @@ const StoreDetail = ({ storeId, onBack }) => {
   // Tab configuration
   const tabs = [
     { id: 'basic', label: '基本情報', icon: Store },
+    { id: 'menus', label: 'メニュー管理', icon: Menu },
     { id: 'reservation', label: '予約システム', icon: Calendar },
     { id: 'richmenu', label: 'リッチメニュー', icon: Smartphone },
     { id: 'line', label: 'LINE設定', icon: MessageSquare },
     { id: 'google', label: 'Google設定', icon: Calendar },
     { id: 'ai', label: 'AI設定', icon: Brain },
-    { id: 'usage', label: '利用状況', icon: BarChart3 },
-    { id: 'reports', label: 'レポート', icon: Shield },
+    { id: 'analytics', label: '分析・レポート', icon: BarChart3 },
     { id: 'billing', label: '請求情報', icon: CreditCard }
   ];
 
@@ -317,6 +319,8 @@ const StoreDetail = ({ storeId, onBack }) => {
             saving={saving}
           />
         );
+      case 'menus':
+        return <MenuManagementPanel storeId={storeId} />;
       case 'reservation':
         return (
           <ReservationTab
@@ -360,10 +364,21 @@ const StoreDetail = ({ storeId, onBack }) => {
             onToggleKeyVisibility={toggleKeyVisibility}
           />
         );
-      case 'usage':
-        return <UsageTab data={storeData.usage} />;
-      case 'reports':
-        return <ReportsTab data={storeData.reports} />;
+      case 'analytics':
+        return (
+          <div className="analytics-combined-tab">
+            <div className="analytics-sections">
+              <div className="usage-section">
+                <h3>📊 利用状況</h3>
+                <UsageTab data={storeData.usage} />
+              </div>
+              <div className="reports-section">
+                <h3>📋 レポート</h3>
+                <ReportsTab data={storeData.reports} />
+              </div>
+            </div>
+          </div>
+        );
       case 'billing':
         return <BillingTab data={storeData.billing} />;
       case 'richmenu':

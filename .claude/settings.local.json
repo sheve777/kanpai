@@ -50,7 +50,9 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Bash(timeout 15 npm start)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run build:*)",
+      "WebFetch(domain:d.kuku.lu)"
     ],
     "deny": []
   }
