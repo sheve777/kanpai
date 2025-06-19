@@ -73,7 +73,7 @@ echo [2/4] Connecting to VPS and deploying...
 echo ========================================
 
 :: VPS operations - Updated for individual containers
-ssh %VPS_USER%@%VPS_IP% "cd ~/kanpai && git pull && echo 'Code updated!'"
+ssh %VPS_USER%@%VPS_IP% "cd ~/kanpai && git reset --hard HEAD && git pull && echo 'Code updated!'"
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] SSH connection or git pull failed
     pause
