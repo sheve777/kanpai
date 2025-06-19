@@ -1,6 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\LineBroadcast.js (修正版)
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { sanitizeText } from '../utils/sanitize';
 
 const LineBroadcast = ({ storeId }) => {
     const [message, setMessage] = useState('');
@@ -47,15 +48,32 @@ const LineBroadcast = ({ storeId }) => {
         return () => clearInterval(interval);
     }, [storeId]);
 
+    // Object URLのクリーンアップ
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // 既存のObject URLがある場合は先に解放
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
     const handleRemoveImage = () => {
+        // Object URLを解放
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
         setImageFile(null);
         setPreviewUrl('');
         const fileInput = document.getElementById('imageUpload');
@@ -340,7 +358,7 @@ const LineBroadcast = ({ storeId }) => {
                                 
                                 {message ? (
                                     <div className="message-text">
-                                        {message}
+                                        {sanitizeText(message)}
                                     </div>
                                 ) : null}
                                 

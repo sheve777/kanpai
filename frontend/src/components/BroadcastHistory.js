@@ -1,6 +1,7 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\BroadcastHistory.js
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { sanitizeText } from '../utils/sanitize';
 
 const BroadcastHistory = ({ storeId }) => {
     const [history, setHistory] = useState([]);
@@ -25,7 +26,7 @@ const BroadcastHistory = ({ storeId }) => {
                 {history.map(item => (
                     <li key={item.id}>
                         <span className="history-date">{new Date(item.sent_at).toLocaleDateString()}</span>
-                        <p className="history-text">{item.message_text}</p>
+                        <p className="history-text">{sanitizeText(item.message_text)}</p>
                         {item.image_url && <span className="history-image-tag">画像あり</span>}
                     </li>
                 ))}

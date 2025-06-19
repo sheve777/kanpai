@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
 import { useUsage } from '../contexts/UsageContext';
+import { isLocalEnv, logger } from '../utils/environment';
+import { mockNotices, mockApiCall } from '../utils/mockData';
 
 const NoticeBoard = ({ storeId }) => {
     const [notices, setNotices] = useState([]);
@@ -83,17 +85,39 @@ const NoticeBoard = ({ storeId }) => {
             // 静的なお知らせ（重要度の高いもののみ）
             const staticNotices = [];
             
-            // 例: 新着レポートがある場合のみ追加
-            // TODO: 実際のAPIから新着レポートの有無を取得
-            // if (hasNewReport) {
-            //     staticNotices.push({
-            //         id: 'new_report',
-            //         icon: '✨',
-            //         message: '新しい月次レポートが届いています',
-            //         badge: 'info',
-            //         priority: 4
-            //     });
-            // }
+            // 新着レポートの確認
+            if (isLocalEnv()) {
+                // ローカル環境ではモックデータを使用
+                logger.log('🏠 通知データ：モックデータを使用');
+                const mockNoticeData = await mockApiCall(mockNotices);
+                staticNotices.push(...mockNoticeData.data.map(notice => ({
+                    id: notice.id,
+                    icon: notice.type === 'new_report' ? '📊' : 
+                          notice.type === 'new_reservation' ? '📅' : 
+                          notice.type === 'usage_warning' ? '⚠️' : '📢',
+                    message: notice.message,
+                    badge: notice.priority === 'high' ? 'error' : 
+                           notice.priority === 'medium' ? 'warning' : 'info',
+                    priority: notice.priority === 'high' ? 1 : 
+                             notice.priority === 'medium' ? 2 : 3
+                })));
+            } else {
+                // 本番環境では実際のAPIから新着レポートを確認
+                try {
+                    const reportResponse = await api.get(`/api/reports/latest?store_id=${storeId}`);
+                    if (reportResponse.data.hasNewReport) {
+                        staticNotices.push({
+                            id: 'new_report',
+                            icon: '📊',
+                            message: '新しい月次レポートが届いています',
+                            badge: 'info',
+                            priority: 4
+                        });
+                    }
+                } catch (err) {
+                    logger.error('レポート確認エラー:', err);
+                }
+            }
 
             // 通知を優先度順にソート
             const allNotices = [...dynamicNotices, ...staticNotices]

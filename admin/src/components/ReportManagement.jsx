@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ReportManagementDetail from './ReportManagementDetail';
+import { isLocalEnv, logger } from '../utils/environment';
+import { useNotification } from './NotificationSystem';
 import {
   FileText,
   Calendar,
@@ -29,6 +31,7 @@ import {
 
 const ReportManagement = () => {
   const { api } = useAuth();
+  const { showSuccess, showError, confirm } = useNotification();
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -38,8 +41,7 @@ const ReportManagement = () => {
   const [selectedStore, setSelectedStore] = useState(null);
   const [showLatestReport, setShowLatestReport] = useState(false);
 
-  // ローカル環境判定
-  const isLocalEnv = window.location.hostname === 'localhost';
+  // 環境判定は utils から取得
 
   // Action handlers for buttons
   const handleSendReport = async (storeId) => {
@@ -48,16 +50,23 @@ const ReportManagement = () => {
     const storeName = store?.name || '店舗';
     const currentMonth = new Date(selectedMonth).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
     
-    const confirmMessage = `📤 レポート配信確認\n\n以下のレポートをLINEで配信しますか？\n\n店舗: ${storeName}\n対象月: ${currentMonth}\n\n配信後は顧客に自動送信されます。\n本当に配信しますか？`;
+    const confirmMessage = `以下のレポートをLINEで配信しますか？\n\n店舗: ${storeName}\n対象月: ${currentMonth}\n\n配信後は顧客に自動送信されます。\n本当に配信しますか？`;
     
-    if (!window.confirm(confirmMessage)) {
-      console.log('❌ レポート配信をキャンセルしました');
+    const confirmed = await confirm({
+      title: 'レポート配信確認',
+      message: confirmMessage,
+      confirmText: '配信',
+      cancelText: 'キャンセル'
+    });
+    
+    if (!confirmed) {
+      logger.log('❌ レポート配信をキャンセルしました');
       return;
     }
     
-    if (isLocalEnv) {
-      console.log('📤 レポート配信シミュレーション:', storeId);
-      alert('レポートを配信しました（ローカル環境）');
+    if (isLocalEnv()) {
+      logger.log('📤 レポート配信シミュレーション:', storeId);
+      showSuccess('配信完了', 'レポートを配信しました（ローカル環境）');
       // Update status to sent
       setStores(prev => prev.map(store => 
         store.id === storeId ? { ...store, reportStatus: 'sent', lastReportDate: new Date().toISOString() } : store
@@ -68,19 +77,19 @@ const ReportManagement = () => {
     try {
       const response = await api.post(`/reports/send/${storeId}`, { month: selectedMonth });
       if (response.data.success) {
-        alert('レポートを配信しました');
+        showSuccess('配信完了', 'レポートを配信しました');
         fetchStoreReports();
       }
     } catch (error) {
-      console.error('レポート配信エラー:', error);
-      alert('配信に失敗しました');
+      logger.error('レポート配信エラー:', error);
+      showError('配信エラー', '配信に失敗しました');
     }
   };
 
   const handleDownloadReport = async (storeId) => {
-    if (isLocalEnv) {
-      console.log('📥 レポートダウンロードシミュレーション:', storeId);
-      alert('レポートをダウンロードしました（ローカル環境）');
+    if (isLocalEnv()) {
+      logger.log('📥 レポートダウンロードシミュレーション:', storeId);
+      showSuccess('ダウンロード完了', 'レポートをダウンロードしました（ローカル環境）');
       return;
     }
     
@@ -96,21 +105,21 @@ const ReportManagement = () => {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('レポートダウンロードエラー:', error);
-      alert('ダウンロードに失敗しました');
+      logger.error('レポートダウンロードエラー:', error);
+      showError('ダウンロードエラー', 'ダウンロードに失敗しました');
     }
   };
 
   const handleEditReport = (storeId) => {
-    console.log('✏️ レポート編集:', storeId);
+    logger.log('✏️ レポート編集:', storeId);
     // Navigate to report editor
     setSelectedStore(storeId);
   };
 
   const handleGenerateReport = async (storeId) => {
-    if (isLocalEnv) {
-      console.log('🤖 個別レポート生成シミュレーション:', storeId);
-      alert('AIでレポートを生成しました（ローカル環境）');
+    if (isLocalEnv()) {
+      logger.log('🤖 個別レポート生成シミュレーション:', storeId);
+      showSuccess('生成完了', 'AIでレポートを生成しました（ローカル環境）');
       // Update status to generated
       setStores(prev => prev.map(store => 
         store.id === storeId ? { ...store, reportStatus: 'generated' } : store
@@ -121,42 +130,42 @@ const ReportManagement = () => {
     try {
       const response = await api.post(`/reports/generate/${storeId}`, { month: selectedMonth });
       if (response.data.success) {
-        alert('レポートを生成しました');
+        showSuccess('生成完了', 'レポートを生成しました');
         fetchStoreReports();
       }
     } catch (error) {
-      console.error('レポート生成エラー:', error);
-      alert('生成に失敗しました');
+      logger.error('レポート生成エラー:', error);
+      showError('生成エラー', '生成に失敗しました');
     }
   };
 
   const handleCreateManualReport = (storeId) => {
-    console.log('📝 手動レポート作成:', storeId);
+    logger.log('📝 手動レポート作成:', storeId);
     // Navigate to manual report creator
     setSelectedStore(storeId);
   };
 
   const handleRegenerateReport = async (storeId) => {
-    if (isLocalEnv) {
-      console.log('🔄 レポート再生成シミュレーション:', storeId);
-      alert('レポートを再生成しました（ローカル環境）');
+    if (isLocalEnv()) {
+      logger.log('🔄 レポート再生成シミュレーション:', storeId);
+      showSuccess('再生成完了', 'レポートを再生成しました（ローカル環境）');
       return;
     }
     
     try {
       const response = await api.post(`/reports/regenerate/${storeId}`, { month: selectedMonth });
       if (response.data.success) {
-        alert('レポートを再生成しました');
+        showSuccess('再生成完了', 'レポートを再生成しました');
         fetchStoreReports();
       }
     } catch (error) {
-      console.error('レポート再生成エラー:', error);
-      alert('再生成に失敗しました');
+      logger.error('レポート再生成エラー:', error);
+      showError('再生成エラー', '再生成に失敗しました');
     }
   };
 
   const handleViewLatestReport = (storeId) => {
-    console.log('📄 最新レポート表示:', storeId);
+    logger.log('📄 最新レポート表示:', storeId);
     // 最新レポートフラグを設定して詳細画面を開く
     setShowLatestReport(true);
     setSelectedStore(storeId);
@@ -172,7 +181,7 @@ const ReportManagement = () => {
       
       // ローカル環境でのモックデータ
       if (isLocalEnv) {
-        console.log('🏠 ローカル環境：モック店舗レポートデータを使用');
+        logger.log('🏠 ローカル環境：モック店舗レポートデータを使用');
         const mockStores = [
           {
             id: 'demo-store-001',
@@ -277,7 +286,7 @@ const ReportManagement = () => {
         setStores(response.data.stores);
       }
     } catch (error) {
-      console.error('店舗レポートデータ取得エラー:', error);
+      logger.error('店舗レポートデータ取得エラー:', error);
     } finally {
       setLoading(false);
     }
@@ -288,8 +297,8 @@ const ReportManagement = () => {
       setGenerating(true);
       
       // ローカル環境でのシミュレーション
-      if (isLocalEnv) {
-        console.log('🤖 全店舗レポート生成シミュレーション');
+      if (isLocalEnv()) {
+        logger.log('🤖 全店舗レポート生成シミュレーション');
         await new Promise(resolve => setTimeout(resolve, 3000));
         
         // すべての店舗のステータスを'generated'に更新
@@ -298,7 +307,7 @@ const ReportManagement = () => {
           reportStatus: store.reportStatus === 'none' ? 'generated' : store.reportStatus
         })));
         
-        alert('全店舗のレポート生成が完了しました！');
+        showSuccess('一括生成完了', '全店舗のレポート生成が完了しました！');
         return;
       }
       
@@ -308,12 +317,12 @@ const ReportManagement = () => {
       });
       
       if (response.data.success) {
-        alert('レポート生成が完了しました');
+        showSuccess('生成完了', 'レポート生成が完了しました');
         fetchStoreReports();
       }
     } catch (error) {
-      console.error('レポート生成エラー:', error);
-      alert('レポート生成に失敗しました');
+      logger.error('レポート生成エラー:', error);
+      showError('生成エラー', 'レポート生成に失敗しました');
     } finally {
       setGenerating(false);
     }

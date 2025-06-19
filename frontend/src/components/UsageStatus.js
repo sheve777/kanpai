@@ -1,22 +1,22 @@
 ﻿// C:\Users\acmsh\kanpAI\frontend\src\components\UsageStatus.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../utils/axiosConfig.js';
 import { useUsage } from '../contexts/UsageContext';
 
-const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
-    const percentage = limit > 0 ? Math.min(100, (usage / limit) * 100) : 0;
+const ProgressBar = React.memo(({ label, usage, limit, alertLevel = 'normal' }) => {
+    const percentage = useMemo(() => 
+        limit > 0 ? Math.min(100, (usage / limit) * 100) : 0
+    , [usage, limit]);
     
-    // アラートレベルに応じたスタイル
-    const getProgressStyle = () => {
+    // アラートレベルに応じたスタイルをメモ化
+    const progressStyle = useMemo(() => {
         switch (alertLevel) {
             case 'critical': return { backgroundColor: 'var(--color-negative)', badge: 'error' };
             case 'warning': return { backgroundColor: '#ff6b35', badge: 'warning' };
             case 'attention': return { backgroundColor: '#ffa502', badge: 'warning' };
             default: return { backgroundColor: 'var(--color-positive)', badge: 'success' };
         }
-    };
-
-    const progressStyle = getProgressStyle();
+    }, [alertLevel]);
 
     return (
         <div className="info-card" style={{ padding: '16px', marginBottom: '16px' }}>
@@ -65,7 +65,7 @@ const ProgressBar = ({ label, usage, limit, alertLevel = 'normal' }) => {
             </div>
         </div>
     );
-};
+});
 
 const LineUsageAlert = ({ lineStatus, friendsCount, onButtonClick }) => {
     if (!lineStatus || lineStatus.alertLevel === 'normal') return null;

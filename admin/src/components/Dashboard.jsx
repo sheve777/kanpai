@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { isLocalEnv, logger } from '../utils/environment';
 import {
   AlertCircle,
   AlertTriangle,
@@ -8,19 +9,11 @@ import {
   XCircle,
   RefreshCw,
   Clock,
-  Activity,
-  Zap,
-  Database,
-  Wifi,
   WifiOff,
   TrendingUp,
-  TrendingDown,
   ArrowRight,
   Shield,
   Terminal,
-  DollarSign,
-  Bell,
-  Eye,
   Settings
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -39,8 +32,7 @@ const Dashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // ローカル環境判定
-  const isLocalEnv = window.location.hostname === 'localhost';
+  // 環境判定は utils から取得
 
   // レポート配信遅延チェック関数
   const checkReportDeliveryDelays = async () => {
@@ -60,7 +52,7 @@ const Dashboard = () => {
       const lastMonthStr = lastMonth.toISOString().slice(0, 7); // YYYY-MM形式
       const lastMonthName = `${lastMonth.getFullYear()}年${(lastMonth.getMonth() + 1).toString().padStart(2, '0')}月`;
       
-      console.log(`📅 レポート配信遅延チェック: ${lastMonthName}分のレポート`);
+      logger.log(`📅 レポート配信遅延チェック: ${lastMonthName}分のレポート`);
       
       if (isLocalEnv) {
         // ローカル環境でのモックデータ
@@ -114,7 +106,7 @@ const Dashboard = () => {
       
       return [];
     } catch (error) {
-      console.error('レポート配信遅延チェックエラー:', error);
+      logger.error('レポート配信遅延チェックエラー:', error);
       return [];
     }
   };
@@ -142,7 +134,7 @@ const Dashboard = () => {
       
       // ローカル環境でのモックデータ
       if (isLocalEnv) {
-        console.log('🏠 ローカル環境：アラート中心のダッシュボードデータを使用');
+        logger.log('🏠 ローカル環境：アラート中心のダッシュボードデータを使用');
         
         // レポート配信遅延チェック
         const reportDelayAlerts = await checkReportDeliveryDelays();
@@ -293,7 +285,7 @@ const Dashboard = () => {
         setRecentLogs(response.data.recentLogs);
       }
     } catch (error) {
-      console.error('Dashboard alerts fetch error:', error);
+      logger.error('Dashboard alerts fetch error:', error);
     } finally {
       setLoading(false);
     }

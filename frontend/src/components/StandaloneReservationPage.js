@@ -10,6 +10,35 @@ const StandaloneReservationPage = ({ storeId }) => {
 
     useEffect(() => {
         fetchStoreInfo();
+        
+        // CSSスタイルを動的に追加
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.id = "standalone-reservation-styles";
+        styleSheet.innerText = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .line-back-link:hover {
+            background-color: #009900 !important;
+            transform: translateY(-2px);
+        }
+
+        .retry-button:hover {
+            background-color: #0056b3 !important;
+        }
+        `;
+        document.head.appendChild(styleSheet);
+        
+        // クリーンアップ関数でスタイルシートを削除
+        return () => {
+            const existingStyleSheet = document.getElementById("standalone-reservation-styles");
+            if (existingStyleSheet) {
+                document.head.removeChild(existingStyleSheet);
+            }
+        };
     }, [storeId]);
 
     const fetchStoreInfo = async () => {
@@ -265,24 +294,6 @@ const styles = {
     },
 };
 
-// CSSアニメーション用のスタイルを追加
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = `
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.line-back-link:hover {
-    background-color: #009900 !important;
-    transform: translateY(-2px);
-}
-
-.retry-button:hover {
-    background-color: #0056b3 !important;
-}
-`;
-document.head.appendChild(styleSheet);
+// CSSアニメーション用のスタイルを追加（コンポーネント内で動的に管理）
 
 export default StandaloneReservationPage;

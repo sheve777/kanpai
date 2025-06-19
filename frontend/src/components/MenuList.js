@@ -1,12 +1,16 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\MenuList.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../utils/axiosConfig.js';
+import { sanitizeText, sanitizeHtml } from '../utils/sanitize';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import ErrorMessage from './common/ErrorMessage';
 
 const MenuList = ({ storeId, initialAction }) => {
     const [menus, setMenus] = useState([]);
     const [editingMenuId, setEditingMenuId] = useState(null);
     const [editFormData, setEditFormData] = useState({});
     const [showAddForm, setShowAddForm] = useState(false);
+    const { error, loading, clearError, executeWithErrorHandling, handleApiError } = useErrorHandler();
     const [newMenuData, setNewMenuData] = useState({ 
         name: '', 
         category: '', 
@@ -17,15 +21,17 @@ const MenuList = ({ storeId, initialAction }) => {
     useEffect(() => {
         const fetchMenus = async () => {
             if (!storeId) return;
-            try {
-                const response = await api.get(`/api/stores/${storeId}/menus`);
-                setMenus(response.data);
-            } catch (error) { 
-                console.error("メニューの取得に失敗しました:", error); 
-            }
+            
+            await executeWithErrorHandling(
+                () => api.get(`/api/stores/${storeId}/menus`).then(response => {
+                    setMenus(response.data);
+                }),
+                'メニューの取得に失敗しました',
+                'メニュー取得'
+            );
         };
         fetchMenus();
-    }, [storeId]);
+    }, [storeId, executeWithErrorHandling]);
 
     useEffect(() => {
         if (initialAction === 'add') {
@@ -63,7 +69,7 @@ const MenuList = ({ storeId, initialAction }) => {
             ));
             setEditingMenuId(null);
         } catch (error) {
-            alert("メニューの更新に失敗しました。");
+            handleApiError(error, 'メニュー更新');
         }
     };
 
@@ -90,7 +96,7 @@ const MenuList = ({ storeId, initialAction }) => {
             });
             setShowAddForm(false);
         } catch (error) {
-            alert("新規メニューの追加に失敗しました。");
+            handleApiError(error, 'メニュー追加');
         }
     };
 
@@ -100,27 +106,29 @@ const MenuList = ({ storeId, initialAction }) => {
             await api.delete(`/api/menus/${menuId}`);
             setMenus(menus.filter(menu => menu.id !== menuId));
         } catch (error) {
-            alert("メニューの削除に失敗しました。");
+            handleApiError(error, 'メニュー削除');
         }
     };
 
-    const getCategoryIcon = (category) => {
-        const icons = {
-            'ドリンク': '🍺',
-            '揚げ物': '🍤',
-            '焼き鳥': '🍗',
-            '刺身': '🐟',
-            'サラダ': '🥗',
-            'ご飯物': '🍚',
-            'デザート': '🍮',
-            'おつまみ': '🥜',
-            '麺類': '🍜',
-            '鍋料理': '🍲'
-        };
-        return icons[category] || '🍽️';
-    };
+    // カテゴリアイコンのマッピングをメモ化
+    const categoryIcons = useMemo(() => ({
+        'ドリンク': '🍺',
+        '揚げ物': '🍤',
+        '焼き鳥': '🍗',
+        '刺身': '🐟',
+        'サラダ': '🥗',
+        'ご飯物': '🍚',
+        'デザート': '🍮',
+        'おつまみ': '🥜',
+        '麺類': '🍜',
+        '鍋料理': '🍲'
+    }), []);
 
-    const MenuCard = ({ menu }) => (
+    const getCategoryIcon = useCallback((category) => {
+        return categoryIcons[category] || '🍽️';
+    }, [categoryIcons]);
+
+    const MenuCard = React.memo(({ menu }) => (
         <div className="info-card menu-card" style={{ textAlign: 'left' }}>
             <div style={{ 
                 display: 'flex', 
@@ -148,7 +156,7 @@ const MenuList = ({ storeId, initialAction }) => {
                         fontSize: '1rem',
                         fontWeight: '600'
                     }}>
-                        {menu.name}
+                        {sanitizeText(menu.name)}
                     </h4>
                     <div className="stat-number" style={{ 
                         fontSize: '1.2rem', 
@@ -164,7 +172,7 @@ const MenuList = ({ storeId, initialAction }) => {
                             opacity: 0.8,
                             lineHeight: 1.4
                         }}>
-                            {menu.description}
+                            {sanitizeHtml(menu.description)}
                         </p>
                     )}
                 </div>
@@ -191,9 +199,9 @@ const MenuList = ({ storeId, initialAction }) => {
                 </button>
             </div>
         </div>
-    );
+    ));
 
-    const EditMenuCard = ({ menu }) => (
+    const EditMenuCard = React.memo(({ menu }) => (
         <div className="info-card menu-card" style={{ textAlign: 'left' }}>
             <div style={{ marginBottom: '12px' }}>
                 <div style={{ 
@@ -303,7 +311,7 @@ const MenuList = ({ storeId, initialAction }) => {
                 </button>
             </div>
         </div>
-    );
+    ));
 
     return (
         <div className="card menu-list-container">
@@ -318,6 +326,8 @@ const MenuList = ({ storeId, initialAction }) => {
                     {showAddForm ? '❌ 閉じる' : '➕ 新規メニュー追加'}
                 </button>
             </div>
+
+            <ErrorMessage error={error} onDismiss={clearError} />
 
             {showAddForm && (
                 <div className="info-card" style={{ marginBottom: '24px' }}>

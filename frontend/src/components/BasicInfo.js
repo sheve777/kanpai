@@ -1,6 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\BasicInfo.js
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { sanitizeText } from '../utils/sanitize';
 
 const InfoRow = ({ icon, label, value, field, onSave, editable = true }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -69,7 +70,7 @@ const InfoRow = ({ icon, label, value, field, onSave, editable = true }) => {
                                 color: 'var(--color-text)',
                                 fontWeight: '500'
                             }}>
-                                {value}
+                                {sanitizeText(value)}
                             </div>
                         ) : null}
                     </div>
@@ -163,7 +164,49 @@ const BasicInfo = () => {
     const storeId = localStorage.getItem('kanpai_store_id');
 
     useEffect(() => {
-        fetchStoreInfo();
+        const abortController = new AbortController();
+        
+        const fetchStoreInfoWithCancel = async () => {
+            if (!storeId) {
+                console.warn('⚠️ storeIdが設定されていません');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await api.get(`/api/stores/${storeId}/info`, {
+                    signal: abortController.signal
+                });
+                
+                // レスポンス処理
+                if (response.data) {
+                    setStoreInfo({
+                        name: response.data.name || storeInfo.name,
+                        phone: response.data.phone || storeInfo.phone,
+                        address: response.data.address || storeInfo.address,
+                        paymentMethods: storeInfo.paymentMethods,
+                        concept: response.data.concept || storeInfo.concept,
+                        operatingHours: formatOperatingHours(response.data.operating_hours)
+                    });
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('❌ 店舗情報取得エラー:', error);
+                    setError('店舗情報の取得に失敗しました。');
+                }
+            } finally {
+                if (!abortController.signal.aborted) {
+                    setLoading(false);
+                }
+            }
+        };
+        
+        fetchStoreInfoWithCancel();
+        
+        return () => {
+            abortController.abort();
+        };
     }, []);
 
     const formatOperatingHours = (hoursObj) => {
@@ -189,33 +232,6 @@ const BasicInfo = () => {
         return 'ランチ 11:30-14:30 / ディナー 17:30-23:00 (L.O. 22:30)'; // デフォルト値
     };
 
-    const fetchStoreInfo = async () => {
-        if (!storeId) {
-            console.warn('⚠️ storeIdが設定されていません');
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const response = await api.get(`/api/stores/${storeId}/info`);
-            if (response.data) {
-                setStoreInfo({
-                    name: response.data.name || storeInfo.name,
-                    phone: response.data.phone || storeInfo.phone,
-                    address: response.data.address || storeInfo.address,
-                    paymentMethods: storeInfo.paymentMethods, // APIから取得できない場合はデフォルト値
-                    concept: response.data.concept || storeInfo.concept,
-                    operatingHours: formatOperatingHours(response.data.operating_hours) || storeInfo.operatingHours
-                });
-            }
-        } catch (error) {
-            console.error('店舗情報の取得に失敗しました:', error);
-            setError('店舗情報の取得に失敗しました');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSave = async (field, value) => {
         try {

@@ -1,6 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\LoginPage.js
 import React, { useState } from 'react';
 import api from '../utils/axiosConfig.js';
+import { isLocalEnv, mockLogin, logger } from '../utils/environment.js';
 
 const LoginPage = ({ onLogin }) => {
     const [storeId, setStoreId] = useState('');
@@ -22,32 +23,41 @@ const LoginPage = ({ onLogin }) => {
                 throw new Error('パスワードを入力してください');
             }
 
-            // ログイン試行（本番環境ではログを削除すること）
+            let data;
 
-            // JWT認証APIを呼び出し
-            const response = await api.post('/api/auth/login', { storeId, password });
+            // ローカル環境ではモック認証を使用
+            if (isLocalEnv()) {
+                logger.log('🏠 ローカル環境：モック認証を使用');
+                data = await mockLogin(storeId, password);
+            } else {
+                // 本番環境では実際のAPIを呼び出し
+                logger.log('🌐 本番環境：API認証を使用');
+                const response = await api.post('/api/auth/login', { storeId, password });
 
-            console.log('📡 レスポンス受信:', response.status);
-            console.log('📦 レスポンスデータ:', response.data);
+                logger.log('📡 レスポンス受信:', response.status);
+                logger.log('📦 レスポンスデータ:', response.data);
 
-            if (!response.data.success) {
-                throw new Error(response.data.error || 'ログインに失敗しました');
+                if (!response.data.success) {
+                    throw new Error(response.data.error || 'ログインに失敗しました');
+                }
+
+                data = response.data;
             }
-
-            const data = response.data;
 
             // 認証成功
             localStorage.setItem('kanpai_store_id', data.store.id);
             localStorage.setItem('kanpai_auth_token', data.token);
             localStorage.setItem('kanpai_store_name', data.store.name);
+            localStorage.setItem('kanpai_store_location', data.store.location || '');
+            localStorage.setItem('kanpai_store_plan', data.store.plan || 'standard');
             
-            console.log('✅ LocalStorage保存完了');
+            logger.log('✅ LocalStorage保存完了');
             
             // 親コンポーネントに認証成功を通知
-            console.log('🔄 親コンポーネントに通知中...');
+            logger.log('🔄 親コンポーネントに通知中...');
             onLogin(data.store.id);
         } catch (err) {
-            console.error('❌ ログインエラー:', err);
+            logger.error('❌ ログインエラー:', err);
             setError(err.message);
         } finally {
             setLoading(false);

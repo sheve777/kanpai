@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../utils/axiosConfig';
+import { isLocalEnv, logger } from '../utils/environment';
+import { mockUsageData, mockApiCall } from '../utils/mockData';
 
 const UsageContext = createContext();
 
@@ -30,15 +32,25 @@ export const UsageProvider = ({ children, storeId }) => {
         setError(null);
 
         try {
-            const response = await api.get(`/api/usage/status?store_id=${storeId}`);
-            const data = response.data;
+            let data;
+
+            if (isLocalEnv()) {
+                // ローカル環境ではモックデータを使用
+                logger.log('🏠 使用量データ：モックデータを使用');
+                const response = await mockApiCall(mockUsageData);
+                data = response.data;
+            } else {
+                // 本番環境では実際のAPIを呼び出し
+                const response = await api.get(`/api/usage/status?store_id=${storeId}`);
+                data = response.data;
+            }
             
             setUsageData(data);
             setLastFetchTime(Date.now());
             
             return data;
         } catch (err) {
-            console.error('使用量データの取得に失敗しました:', err);
+            logger.error('使用量データの取得に失敗しました:', err);
             setError(err);
             return null;
         } finally {
@@ -60,13 +72,14 @@ export const UsageProvider = ({ children, storeId }) => {
         }
     }, [storeId, usageData, fetchUsageData]);
 
-    const value = {
+    // コンテキスト値をメモ化して不要な再レンダリングを防ぐ
+    const value = useMemo(() => ({
         usageData,
         loading,
         error,
         refetch: () => fetchUsageData(true),
         getCachedData: () => fetchUsageData(false)
-    };
+    }), [usageData, loading, error, fetchUsageData]);
 
     return (
         <UsageContext.Provider value={value}>

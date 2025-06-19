@@ -10,6 +10,19 @@ kanpAI is a comprehensive restaurant management system designed for Japanese iza
 2. **Customer Frontend** (`/frontend`) - React application for customers  
 3. **Admin Dashboard** (`/admin`) - React/Vite application for store owners
 
+## Security Guidelines
+
+**CRITICAL**: Never commit sensitive information to the repository. Always use environment variables for:
+- Database credentials
+- API keys and secrets
+- Authentication tokens
+- Passwords (including demo passwords)
+- Private keys and certificates
+
+**Required**: Each application must have proper `.env.example` files with all required environment variables documented.
+
+**Enforcement**: All applications should validate required environment variables on startup and fail gracefully if missing.
+
 ## Development Commands
 
 ### Backend Development

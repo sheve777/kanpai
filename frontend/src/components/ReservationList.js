@@ -1,6 +1,8 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\ReservationList.js
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
+import { isLocalEnv } from '../utils/environment';
+import { mockReservations, mockApiCall } from '../utils/mockData';
 
 const ReservationList = ({ storeId }) => {
     const [reservations, setReservations] = useState([]);
@@ -9,43 +11,69 @@ const ReservationList = ({ storeId }) => {
     const [businessStatus, setBusinessStatus] = useState(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
-    useEffect(() => {
-        fetchReservations();
-        fetchBusinessStatus();
-    }, [storeId, selectedDate]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth <= 600);
-        };
-        
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
+    // 関数定義をuseEffectの前に移動
     const fetchBusinessStatus = async () => {
         try {
-            const response = await api.get(`/api/reservations/business-status?store_id=${storeId}`);
-            setBusinessStatus(response.data);
-            console.log('✅ 営業状態取得:', response.data);
+            if (isLocalEnv()) {
+                // ローカル環境ではモック営業状態を使用
+                console.log('🏠 営業状態：モックデータを使用');
+                const mockStatus = {
+                    isOpen: true,
+                    nextOpenTime: null,
+                    todayReservations: mockReservations.filter(res => 
+                        res.date.slice(0, 10) === new Date().toISOString().slice(0, 10)
+                    ).length
+                };
+                setBusinessStatus(mockStatus);
+            } else {
+                const response = await api.get(`/api/reservations/business-status?store_id=${storeId}`);
+                setBusinessStatus(response.data);
+                console.log('✅ 営業状態取得:', response.data);
+            }
         } catch (error) {
             console.error('❌ 営業状態取得エラー:', error);
         }
     };
 
     const fetchReservations = async () => {
+        console.log('🔍 fetchReservations called', { isLocal: isLocalEnv() });
         try {
             setLoading(true);
-            const response = await api.get(`/api/reservations?store_id=${storeId}&period=${selectedDate}`);
-            
-            // APIレスポンスの形式を確認してデータを正しく設定
-            let reservationData = response.data;
-            if (reservationData && reservationData.reservations) {
-                // デモAPIの形式: { success: true, reservations: [...] }
-                reservationData = reservationData.reservations;
-            } else if (!Array.isArray(reservationData)) {
-                // データが配列でない場合は空配列に設定
-                reservationData = [];
+            let reservationData;
+
+            if (isLocalEnv()) {
+                // ローカル環境ではモックデータを使用
+                console.log('🏠 予約データ：モックデータを使用');
+                const response = await mockApiCall(mockReservations);
+                reservationData = response.data;
+
+                // selectedDate に応じてフィルター
+                const today = new Date().toISOString().slice(0, 10);
+                if (selectedDate === 'today') {
+                    reservationData = reservationData.filter(res => 
+                        res.date.slice(0, 10) === today
+                    );
+                } else if (selectedDate === 'tomorrow') {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+                    reservationData = reservationData.filter(res => 
+                        res.date.slice(0, 10) === tomorrowStr
+                    );
+                }
+            } else {
+                // 本番環境では実際のAPIを呼び出し
+                const response = await api.get(`/api/reservations?store_id=${storeId}&period=${selectedDate}`);
+                
+                // APIレスポンスの形式を確認してデータを正しく設定
+                reservationData = response.data;
+                if (reservationData && reservationData.reservations) {
+                    // デモAPIの形式: { success: true, reservations: [...] }
+                    reservationData = reservationData.reservations;
+                } else if (!Array.isArray(reservationData)) {
+                    // データが配列でない場合は空配列に設定
+                    reservationData = [];
+                }
             }
             
             setReservations(reservationData);
@@ -141,12 +169,31 @@ const ReservationList = ({ storeId }) => {
         if (!Array.isArray(reservations)) return [];
         
         return reservations.filter(reservation => {
+            if (!reservation.reservation_time || !reservation.end_time) return false;
             const resTime = reservation.reservation_time.substring(0, 5);
             const endTime = reservation.end_time;
             return resTime <= timeSlot && endTime > timeSlot;
         });
     };
 
+    // useEffectは関数定義の後に配置
+    useEffect(() => {
+        console.log('🔍 ReservationList useEffect triggered', { storeId, selectedDate });
+        fetchReservations();
+        fetchBusinessStatus();
+    }, [storeId, selectedDate]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 600);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    console.log('🔍 ReservationList render', { storeId, loading, reservationsCount: reservations.length });
+    
     if (!storeId) {
         return (
             <div className="card reservation-list-container">
@@ -272,7 +319,7 @@ const ReservationList = ({ storeId }) => {
                                     color: 'var(--color-accent)',
                                     minWidth: '50px'
                                 }}>
-                                    🕐 {reservation.reservation_time.substring(0, 5)}
+                                    🕐 {reservation.reservation_time ? reservation.reservation_time.substring(0, 5) : '--:--'}
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <div style={{
@@ -493,7 +540,7 @@ const ReservationList = ({ storeId }) => {
                                                                     gap: '8px'
                                                                 }}>
                                                                     <span>
-                                                                        {reservation.reservation_time.substring(0, 5)} 〜 {reservation.end_time}
+                                                                        {reservation.reservation_time ? reservation.reservation_time.substring(0, 5) : '--:--'} 〜 {reservation.end_time || '--:--'}
                                                                     </span>
                                                                     {getStatusBadge(reservation.status, reservation.source)}
                                                                 </div>

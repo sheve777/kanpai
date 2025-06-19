@@ -1,6 +1,7 @@
 // C:\Users\acmsh\kanpAI\frontend\src\components\ReservationForm.js
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/axiosConfig.js';
+import { sanitizeText } from '../utils/sanitize';
 import './ReservationForm.css';
 
 const ReservationForm = ({ storeId, onReservationComplete }) => {
@@ -187,7 +188,7 @@ const ReservationForm = ({ storeId, onReservationComplete }) => {
                 <div className="reservation-details">
                     <h3>【予約確定】</h3>
                     <div className="reservation-info">
-                        <div><strong>{formData.customer_name}</strong>様 {formData.party_size}名</div>
+                        <div><strong>{sanitizeText(formData.customer_name)}</strong>様 {formData.party_size}名</div>
                         <div>{new Date(formData.reservation_date).toLocaleDateString('ja-JP', { 
                             month: 'long', 
                             day: 'numeric', 
@@ -217,7 +218,7 @@ const ReservationForm = ({ storeId, onReservationComplete }) => {
                 <h2>【予約内容確認】</h2>
                 
                 <div className="reservation-confirm-details">
-                    <div><strong>お名前:</strong> {formData.customer_name}様</div>
+                    <div><strong>お名前:</strong> {sanitizeText(formData.customer_name)}様</div>
                     <div><strong>人数:</strong> {formData.party_size}名</div>
                     <div><strong>日時:</strong> {new Date(formData.reservation_date).toLocaleDateString('ja-JP', { 
                         month: 'long', 
@@ -225,9 +226,9 @@ const ReservationForm = ({ storeId, onReservationComplete }) => {
                         weekday: 'short' 
                     })} {formData.reservation_time}</div>
                     <div><strong>席種:</strong> {selectedSeat?.name}</div>
-                    <div><strong>電話番号:</strong> {formData.customer_phone}</div>
+                    <div><strong>電話番号:</strong> {sanitizeText(formData.customer_phone)}</div>
                     {formData.notes && (
-                        <div><strong>ご要望:</strong> {formData.notes}</div>
+                        <div><strong>ご要望:</strong> {sanitizeText(formData.notes)}</div>
                     )}
                 </div>
 

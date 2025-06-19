@@ -48,7 +48,9 @@
       "Bash(mv:*)",
       "Bash(for file in ApiUsagePrediction.jsx PeriodComparison.jsx ScheduleManager.jsx TemplateManager.jsx)",
       "Bash(do echo \"=== $file ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(timeout 15 npm start)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

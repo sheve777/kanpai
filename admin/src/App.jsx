@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
@@ -11,6 +11,8 @@ import BroadcastMessage from './components/BroadcastMessage';
 import LogAnalysis from './components/LogAnalysis';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './components/NotificationSystem';
+import { isLocalEnv } from './utils/environment';
 import './App.css';
 
 // Protected Route Component
@@ -18,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   // ローカル環境では認証をスキップ
-  const isLocalhost = window.location.hostname === 'localhost';
+  const isLocalhost = isLocalEnv();
   
   if (loading && !isLocalhost) {
     return (
@@ -35,7 +37,7 @@ const ProtectedRoute = ({ children }) => {
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
-  const isLocalhost = window.location.hostname === 'localhost';
+  const isLocalhost = isLocalEnv();
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -137,7 +139,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

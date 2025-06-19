@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/axiosConfig.js';
-import ReportCharts from './ReportCharts.js';
+import LazyReportCharts from './LazyReportCharts.js';
 
 const ReportDetailPage = ({ reportId, onBack }) => {
     const [report, setReport] = useState(null);
@@ -554,7 +554,7 @@ const ReportDetailPage = ({ reportId, onBack }) => {
                         </div>
 
                         {/* チャート分析セクション */}
-                        <ReportCharts reportData={report} reportMonth={report.report_month} />
+                        <LazyReportCharts reportData={report} reportMonth={report.report_month} />
 
                         {/* フッター */}
                         <div style={{
