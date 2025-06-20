@@ -52,7 +52,8 @@
       "Bash(timeout 15 npm start)",
       "Bash(git restore:*)",
       "Bash(npm run build:*)",
-      "WebFetch(domain:d.kuku.lu)"
+      "WebFetch(domain:d.kuku.lu)",
+      "Bash(./remove-admin.bat)"
     ],
     "deny": []
   }

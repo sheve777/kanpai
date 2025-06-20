@@ -525,13 +525,13 @@ router.post('/stores/create', authenticateAdmin, logAdminActivity('create_store'
       const hashedPassword = await bcrypt.hash(initialPassword, 10);
       
       await client.query(`
-        INSERT INTO store_auth (store_id, username, password_hash, is_active, created_at)
+        INSERT INTO store_auth (store_id, password_hash, is_active, is_temporary_password, created_at)
         VALUES ($1, $2, $3, $4, NOW())
       `, [
         finalStoreId,
-        basicInfo.name.replace(/\s+/g, '').toLowerCase(),
         hashedPassword,
-        true
+        true,
+        true  // 仮パスワードフラグを設定
       ]);
 
       await client.query('COMMIT');

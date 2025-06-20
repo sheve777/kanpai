@@ -6,8 +6,8 @@ import { generateChatResponse } from '../services/chatService.js';
 
 const router = express.Router();
 const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'dummy-token',
+  channelSecret: process.env.LINE_CHANNEL_SECRET || 'dummy-secret',
 };
 
 const findOrCreateSession = async (storeId, lineUserId) => {
@@ -37,7 +37,14 @@ const findOrCreateSession = async (storeId, lineUserId) => {
 };
 
 
-router.post('/webhook/:storeId', line.middleware(config), async (req, res) => {
+router.post('/webhook/:storeId', (req, res, next) => {
+  // LINE middlewareを一時的に無効化（デモモード）
+  if (!process.env.LINE_CHANNEL_SECRET) {
+    console.log('⚠️ デモモード: LINE middleware をスキップします');
+    return next();
+  }
+  return line.middleware(config)(req, res, next);
+}, async (req, res) => {
   try {
     if (!req.body.events || req.body.events.length === 0) return res.status(200).json({});
     const storeId = req.params.storeId;

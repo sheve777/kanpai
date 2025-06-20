@@ -51,11 +51,16 @@ const LoginPage = ({ onLogin }) => {
             localStorage.setItem('kanpai_store_location', data.store.location || '');
             localStorage.setItem('kanpai_store_plan', data.store.plan || 'standard');
             
+            // 仮パスワードフラグを保存
+            if (data.isTemporaryPassword) {
+                localStorage.setItem('kanpai_temporary_password', 'true');
+            }
+            
             logger.log('✅ LocalStorage保存完了');
             
             // 親コンポーネントに認証成功を通知
             logger.log('🔄 親コンポーネントに通知中...');
-            onLogin(data.store.id);
+            onLogin(data.store.id, data.isTemporaryPassword);
         } catch (err) {
             logger.error('❌ ログインエラー:', err);
             setError(err.message);

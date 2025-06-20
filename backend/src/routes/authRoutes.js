@@ -56,7 +56,8 @@ router.post('/login', validateLogin, catchAsync(async (req, res) => {
                         s.phone,
                         s.address,
                         sa.password_hash,
-                        sa.is_active
+                        sa.is_active,
+                        sa.is_temporary_password
                     FROM stores s
                     LEFT JOIN store_auth sa ON s.id = sa.store_id
                     WHERE s.id = $1
@@ -137,7 +138,8 @@ router.post('/login', validateLogin, catchAsync(async (req, res) => {
                     name: store.name,
                     phone: store.phone,
                     address: store.address
-                }
+                },
+                isTemporaryPassword: store.is_temporary_password || false
             });
 
     } catch (error) {
@@ -252,13 +254,14 @@ router.post('/change-password', async (req, res) => {
             const saltRounds = 10;
             const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
 
-            // store_authレコードを更新または作成
+            // store_authレコードを更新または作成（仮パスワードフラグをリセット）
             const upsertQuery = `
-                INSERT INTO store_auth (store_id, password_hash, updated_at)
-                VALUES ($1, $2, NOW())
+                INSERT INTO store_auth (store_id, password_hash, is_temporary_password, updated_at)
+                VALUES ($1, $2, false, NOW())
                 ON CONFLICT (store_id) 
                 DO UPDATE SET 
                     password_hash = $2,
+                    is_temporary_password = false,
                     updated_at = NOW()
             `;
 

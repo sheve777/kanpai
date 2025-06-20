@@ -17,6 +17,7 @@ import ReportDetailPage from './components/ReportDetailPage';
 import ReservationForm from './components/ReservationForm';
 import StandaloneReservationPage from './components/StandaloneReservationPage';
 import LoginPage from './components/LoginPage';
+import PasswordChangeModal from './components/PasswordChangeModal';
 import { UsageProvider } from './contexts/UsageContext';
 import './App.css';
 
@@ -40,6 +41,7 @@ function App() {
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
 
   const handleSelectReport = (reportId) => {
     setSelectedReportId(reportId);
@@ -57,11 +59,16 @@ function App() {
     // setCurrentPage('dashboard');
   };
 
-  const handleLogin = (loginStoreId) => {
+  const handleLogin = (loginStoreId, isTemporaryPassword) => {
     console.log('🔓 ログイン成功:', loginStoreId);
     setStoreId(loginStoreId);
     setIsAuthenticated(true);
     setCurrentPage('dashboard');
+    
+    // 仮パスワードの場合、パスワード変更モーダルを表示
+    if (isTemporaryPassword) {
+      setShowPasswordChangeModal(true);
+    }
     
     // URLを更新（必要に応じて）
     const newUrl = `${window.location.pathname}?store=${loginStoreId}`;
@@ -75,7 +82,15 @@ function App() {
     setStoreId(null);
     localStorage.removeItem('kanpai_store_id');
     localStorage.removeItem('kanpai_auth_token');
+    localStorage.removeItem('kanpai_temporary_password');
     setCurrentPage('dashboard');
+  };
+
+  const handlePasswordChangeSuccess = () => {
+    // 仮パスワードフラグを削除
+    localStorage.removeItem('kanpai_temporary_password');
+    setShowPasswordChangeModal(false);
+    console.log('✅ パスワード変更完了');
   };
 
   // 認証状態と店舗IDの初期化
@@ -146,6 +161,13 @@ function App() {
     <div className="App-container">
       {isAuthenticated && currentPage !== 'reservation' && currentPage !== 'standalone-reservation' && (
         <Header onLogout={handleLogout} storeId={storeId} />
+      )}
+      
+      {showPasswordChangeModal && (
+        <PasswordChangeModal 
+          onClose={() => setShowPasswordChangeModal(false)}
+          onSuccess={handlePasswordChangeSuccess}
+        />
       )}
       
       {isAuthenticated ? (

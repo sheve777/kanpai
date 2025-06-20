@@ -1,5 +1,5 @@
 // 月次レポート自動生成スケジューラー
-import cron from 'node-cron';
+// import cron from 'node-cron';
 import pool from '../config/db.js';
 
 /**
@@ -10,10 +10,10 @@ export const startReportScheduler = () => {
     
     // 毎月1日の午前6時に実行 (0 6 1 * *)
     // テスト用: 毎分実行 (* * * * *)
-    cron.schedule('0 6 1 * *', async () => {
-        console.log('🤖 月次レポート自動生成開始 -', new Date().toISOString());
-        await generateMonthlyReportsForAllStores();
-    });
+    // cron.schedule('0 6 1 * *', async () => {
+    //     console.log('🤖 月次レポート自動生成開始 -', new Date().toISOString());
+    //     await generateMonthlyReportsForAllStores();
+    // });
     
     // 開発/テスト用：手動トリガー用の関数も公開
     console.log('💡 手動実行も可能: generateMonthlyReportsForAllStores()');

@@ -87,9 +87,16 @@ echo 2. Frontend only
 echo 3. Admin only
 echo 4. Nginx only
 echo 5. All services
+echo 6. Emergency recovery (sequential start)
+echo 7. Check status only
+echo 8. Backend logs (troubleshoot)
+echo 9. Force backend restart
+echo a. Fix npm install (backend)
+echo b. Rebuild backend container
+echo c. Debug backend interactively
 echo 0. Skip restart
 echo.
-set /p RESTART_CHOICE="Enter your choice (0-5): "
+set /p RESTART_CHOICE="Enter your choice (0-9,a,b,c): "
 
 if "%RESTART_CHOICE%"=="1" (
     ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_backend && echo 'Backend restarted!'"
@@ -101,6 +108,20 @@ if "%RESTART_CHOICE%"=="1" (
     ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_nginx && echo 'Nginx restarted!'"
 ) else if "%RESTART_CHOICE%"=="5" (
     ssh %VPS_USER%@%VPS_IP% "docker restart kanpai_backend kanpai_frontend kanpai_admin kanpai_nginx && echo 'All services restarted!'"
+) else if "%RESTART_CHOICE%"=="6" (
+    ssh %VPS_USER%@%VPS_IP% "docker stop kanpai_nginx kanpai_backend kanpai_frontend kanpai_admin && docker start kanpai_backend && sleep 3 && docker start kanpai_frontend kanpai_admin kanpai_nginx && echo 'Emergency recovery completed!'"
+) else if "%RESTART_CHOICE%"=="7" (
+    ssh %VPS_USER%@%VPS_IP% "docker ps -a && echo '--- Container Logs ---' && docker logs kanpai_nginx | tail -10"
+) else if "%RESTART_CHOICE%"=="8" (
+    ssh %VPS_USER%@%VPS_IP% "echo '=== Backend Logs ===' && docker logs kanpai_backend --tail 30"
+) else if "%RESTART_CHOICE%"=="9" (
+    ssh %VPS_USER%@%VPS_IP% "docker stop kanpai_backend && docker rm kanpai_backend && docker run -d --name kanpai_backend --network kanpai_default -p 3002:3002 node:18-alpine sh -c 'cd /app && npm start' && echo 'Backend force restarted!'"
+) else if "%RESTART_CHOICE%"=="a" (
+    ssh %VPS_USER%@%VPS_IP% "docker start kanpai_backend && sleep 5 && docker exec kanpai_backend sh -c 'cd /app && npm install' && docker restart kanpai_backend && echo 'NPM install fixed and backend restarted!'"
+) else if "%RESTART_CHOICE%"=="b" (
+    ssh %VPS_USER%@%VPS_IP% "cd ~/kanpai && docker stop kanpai_backend && docker rm kanpai_backend && docker run -d --name kanpai_backend -v ~/kanpai/backend:/app -w /app -p 3002:3002 node:18-alpine sh -c 'npm install && npm start' && echo 'Backend container rebuilt with fresh install!'"
+) else if "%RESTART_CHOICE%"=="c" (
+    ssh %VPS_USER%@%VPS_IP% "docker run --rm -it -v ~/kanpai/backend:/app -w /app node:18-alpine sh"
 ) else (
     echo Skipping restart...
 )
